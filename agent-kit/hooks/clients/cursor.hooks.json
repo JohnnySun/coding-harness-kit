@@ -9,6 +9,9 @@
     ],
     "stop": [
       { "command": "node tools/harness/cursor-hook.mjs" }
+    ],
+    "beforeSubmitPrompt": [
+      { "command": "node tools/harness/prompt-skill-router.mjs" }
     ]
   }
 }
