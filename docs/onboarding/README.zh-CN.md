@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <strong>简体中文</strong> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
@@ -129,11 +129,11 @@ bash tools/harness/check-local-absorb.sh --all   # 本机 harness-ready（非公
 
 ## 文档
 
-- [`docs/README.md`](docs/README.md) — 文档落点约定
-- [`docs/harness/design.md`](docs/harness/design.md) — 本仓 harness 设计
-- [`docs/specs/`](docs/specs/) — 设计文档归档
-- [`AGENTS.md`](AGENTS.md) — 完成定义、黑名单、机关落点
+- [`docs/README.md`](../README.md) — 文档落点约定
+- [`docs/harness/design.md`](../harness/design.md) — 本仓 harness 设计
+- [`docs/specs/`](../specs/) — 设计文档归档
+- [`AGENTS.md`](../../AGENTS.md) — 完成定义、黑名单、机关落点
 
 ## 许可
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

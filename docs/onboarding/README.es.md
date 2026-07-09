@@ -1,13 +1,13 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
   <a href="README.ko.md">한국어</a> |
-  <a href="README.es.md">Español</a> |
-  <strong>Français</strong> |
+  <strong>Español</strong> |
+  <a href="README.fr.md">Français</a> |
   <a href="README.de.md">Deutsch</a> |
   <a href="README.pt-BR.md">Português</a> |
   <a href="README.ru.md">Русский</a> |
@@ -23,7 +23,7 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> Boîte à outils open source pour **construire et itérer des coding harnesses**. Pas de code métier ; cible la **surface harness** de chaque subject. Trois étapes : submodules → Agent-Kit → (optionnel) sync.
+> Kit de código abierto para **construir e iterar coding harnesses**. Sin código de negocio; trabaja sobre la **superficie de harness** de cada subject. Tres pasos: submodules → Agent-Kit → (opcional) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. Initialiser
+## 1. Inicializar
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. Installer Agent-Kit (outils IA)
+## 2. Instalar Agent-Kit (herramientas AI)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. Brancher vos subjects (optionnel)
+## 3. Conectar tus subjects (opcional)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-Référence quotidienne.
+Referencia diaria.
 
-## Commandes courantes
+## Comandos comunes
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ Référence quotidienne.
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## Documentation
+## Documentación
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## Licence
+## Licencia
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

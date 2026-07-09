@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
@@ -9,7 +9,7 @@
   <a href="README.es.md">Español</a> |
   <a href="README.fr.md">Français</a> |
   <a href="README.de.md">Deutsch</a> |
-  <strong>Português</strong> |
+  <a href="README.pt-BR.md">Português</a> |
   <a href="README.ru.md">Русский</a> |
   <a href="README.ar.md">العربية</a> |
   <a href="README.hi.md">हिन्दी</a> |
@@ -17,13 +17,13 @@
   <a href="README.vi.md">Tiếng Việt</a> |
   <a href="README.th.md">ไทย</a> |
   <a href="README.it.md">Italiano</a> |
-  <a href="README.nl.md">Nederlands</a> |
+  <strong>Nederlands</strong> |
   <a href="README.pl.md">Polski</a> |
   <a href="README.tr.md">Türkçe</a> |
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> Kit open source para **construir e iterar coding harnesses**. Sem código de negócio; atua na **superfície de harness** de cada subject. Três passos: submodules → Agent-Kit → (opcional) sync.
+> Open-source toolkit om **coding harnesses te bouwen en te itereren**. Geen businesscode; werkt op het **harness-oppervlak** van elke subject. Drie stappen: submodules → Agent-Kit → (optioneel) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. Inicializar
+## 1. Initialiseren
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. Instalar Agent-Kit (ferramentas de IA)
+## 2. Agent-Kit installeren (AI-tools)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. Conectar seus subjects (opcional)
+## 3. Eigen subjects koppelen (optioneel)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-Referência diária.
+Dagelijkse referentie.
 
-## Comandos comuns
+## Veelgebruikte commando's
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ Referência diária.
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## Documentação
+## Documentatie
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## Licença
+## Licentie
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

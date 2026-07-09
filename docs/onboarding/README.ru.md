@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
@@ -10,12 +10,12 @@
   <a href="README.fr.md">Français</a> |
   <a href="README.de.md">Deutsch</a> |
   <a href="README.pt-BR.md">Português</a> |
-  <a href="README.ru.md">Русский</a> |
+  <strong>Русский</strong> |
   <a href="README.ar.md">العربية</a> |
   <a href="README.hi.md">हिन्दी</a> |
   <a href="README.id.md">Bahasa Indonesia</a> |
   <a href="README.vi.md">Tiếng Việt</a> |
-  <strong>ไทย</strong> |
+  <a href="README.th.md">ไทย</a> |
   <a href="README.it.md">Italiano</a> |
   <a href="README.nl.md">Nederlands</a> |
   <a href="README.pl.md">Polski</a> |
@@ -23,7 +23,7 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> ชุดเครื่องมือโอเพนซอร์สสำหรับ **สร้างและทำซ้ำ coding harness** ไม่มีซอร์สธุรกิจ ทำงานบน **พื้นผิว harness** ของแต่ละ subject สามขั้นตอน: submodules → Agent-Kit → (ทางเลือก) sync
+> Open-source набор для **сборки и итерации coding harness**. Без бизнес-кода; работает с **поверхностью harness** каждого subject. Три шага: submodules → Agent-Kit → (опционально) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. เริ่มต้น
+## 1. Инициализация
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. ติดตั้ง Agent-Kit (เครื่องมือ AI)
+## 2. Установка Agent-Kit (AI-инструменты)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. เชื่อม subject ของคุณ (ทางเลือก)
+## 3. Подключение своих subject (опционально)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-อ้างอิงประจำวัน
+Ежедневный справочник.
 
-## คำสั่งที่ใช้บ่อย
+## Частые команды
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ bash tools/harness/check-local-absorb.sh --all
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## เอกสาร
+## Документация
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## สัญญาอนุญาต
+## Лицензия
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

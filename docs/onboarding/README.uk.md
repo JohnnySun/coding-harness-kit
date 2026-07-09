@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
@@ -14,16 +14,16 @@
   <a href="README.ar.md">العربية</a> |
   <a href="README.hi.md">हिन्दी</a> |
   <a href="README.id.md">Bahasa Indonesia</a> |
-  <strong>Tiếng Việt</strong> |
+  <a href="README.vi.md">Tiếng Việt</a> |
   <a href="README.th.md">ไทย</a> |
   <a href="README.it.md">Italiano</a> |
   <a href="README.nl.md">Nederlands</a> |
   <a href="README.pl.md">Polski</a> |
   <a href="README.tr.md">Türkçe</a> |
-  <a href="README.uk.md">Українська</a>
+  <strong>Українська</strong>
 </h3>
 
-> Bộ công cụ mã nguồn mở để **xây dựng và lặp lại coding harness**. Không chứa mã nghiệp vụ; làm việc trên **bề mặt harness** của mỗi subject. Ba bước: submodules → Agent-Kit → (tuỳ chọn) sync.
+> Open-source набір для **побудови та ітерації coding harness**. Без бізнес-коду; працює з **поверхнею harness** кожного subject. Три кроки: submodules → Agent-Kit → (опційно) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. Khởi tạo
+## 1. Ініціалізація
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. Cài Agent-Kit (công cụ AI)
+## 2. Встановлення Agent-Kit (AI-інструменти)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. Kết nối subject của bạn (tuỳ chọn)
+## 3. Підключення своїх subject (опційно)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-Tham khảo hàng ngày.
+Щоденний довідник.
 
-## Lệnh thường dùng
+## Часті команди
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ Tham khảo hàng ngày.
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## Tài liệu
+## Документація
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## Giấy phép
+## Ліцензія
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

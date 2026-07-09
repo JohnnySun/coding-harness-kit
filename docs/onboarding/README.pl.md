@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
@@ -11,19 +11,19 @@
   <a href="README.de.md">Deutsch</a> |
   <a href="README.pt-BR.md">Português</a> |
   <a href="README.ru.md">Русский</a> |
-  <strong>العربية</strong> |
+  <a href="README.ar.md">العربية</a> |
   <a href="README.hi.md">हिन्दी</a> |
   <a href="README.id.md">Bahasa Indonesia</a> |
   <a href="README.vi.md">Tiếng Việt</a> |
   <a href="README.th.md">ไทย</a> |
   <a href="README.it.md">Italiano</a> |
   <a href="README.nl.md">Nederlands</a> |
-  <a href="README.pl.md">Polski</a> |
+  <strong>Polski</strong> |
   <a href="README.tr.md">Türkçe</a> |
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> مجموعة أدوات مفتوحة المصدر **لبناء وتكرار coding harness**. لا تحتوي على شيفرة أعمال؛ تعمل على **سطح الـ harness** لكل subject. ثلاث خطوات: submodules → Agent-Kit → (اختياري) sync.
+> Zestaw open source do **budowy i iteracji coding harness**. Bez kodu biznesowego; działa na **powierzchni harness** każdego subject. Trzy kroki: submodules → Agent-Kit → (opcjonalnie) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. التهيئة
+## 1. Inicjalizacja
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. تثبيت Agent-Kit (أدوات الذكاء الاصطناعي)
+## 2. Instalacja Agent-Kit (narzędzia AI)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. ربط subjects الخاصة بك (اختياري)
+## 3. Podłączenie własnych subject (opcjonalnie)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-مرجع يومي.
+Codzienna ściągawka.
 
-## أوامر شائعة
+## Częste polecenia
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ bash tools/harness/check-local-absorb.sh --all
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## التوثيق
+## Dokumentacja
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## الترخيص
+## Licencja
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

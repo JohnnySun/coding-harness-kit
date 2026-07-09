@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
@@ -13,8 +13,8 @@
   <a href="README.ru.md">Русский</a> |
   <a href="README.ar.md">العربية</a> |
   <a href="README.hi.md">हिन्दी</a> |
-  <strong>Bahasa Indonesia</strong> |
-  <a href="README.vi.md">Tiếng Việt</a> |
+  <a href="README.id.md">Bahasa Indonesia</a> |
+  <strong>Tiếng Việt</strong> |
   <a href="README.th.md">ไทย</a> |
   <a href="README.it.md">Italiano</a> |
   <a href="README.nl.md">Nederlands</a> |
@@ -23,7 +23,7 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> Toolkit open source untuk **membangun dan mengiterasi coding harness**. Tanpa kode bisnis; bekerja pada **permukaan harness** setiap subject. Tiga langkah: submodules → Agent-Kit → (opsional) sync.
+> Bộ công cụ mã nguồn mở để **xây dựng và lặp lại coding harness**. Không chứa mã nghiệp vụ; làm việc trên **bề mặt harness** của mỗi subject. Ba bước: submodules → Agent-Kit → (tuỳ chọn) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. Inisialisasi
+## 1. Khởi tạo
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. Pasang Agent-Kit (alat AI)
+## 2. Cài Agent-Kit (công cụ AI)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. Hubungkan subject Anda (opsional)
+## 3. Kết nối subject của bạn (tuỳ chọn)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-Referensi harian.
+Tham khảo hàng ngày.
 
-## Perintah umum
+## Lệnh thường dùng
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ Referensi harian.
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## Dokumentasi
+## Tài liệu
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## Lisensi
+## Giấy phép
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

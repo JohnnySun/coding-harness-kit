@@ -25,8 +25,15 @@ docs/specs/YYYYMMDD-slug/
 | Directory | Purpose |
 |-----------|---------|
 | `docs/harness/` | **Ledgers & long-lived harness SSOT only**: `design.md`, `gates.json`, `retro-inbox.md`, `work-orders.md`, `deviation-log.md`, `gate-events.jsonl`, `reports/` |
-| `docs/onboarding/` | Getting-started / CI / install cheatsheets (optional) |
+| `docs/onboarding/` | Getting-started / CI / install cheatsheets; **localized READMEs** (`README.<locale>.md`) |
 | `docs/README.md` | This file — placement SSOT |
+
+### Root README vs locales
+
+| Path | Role |
+|------|------|
+| `/README.md` | **Default language only** (Traditional Chinese). Keep the root clean — do not dump every locale here. |
+| `docs/onboarding/README.<locale>.md` | Translations (zh-CN, en, ja, …). Linked from the language switcher in `/README.md`. |
 
 `docs/harness/` is **not** a dumping ground for plans. If it is a design beat,
 it belongs under `docs/specs/`.

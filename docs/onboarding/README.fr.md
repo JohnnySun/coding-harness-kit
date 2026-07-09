@@ -1,13 +1,13 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <a href="README.en.md">English</a> |
   <a href="README.ja.md">日本語</a> |
   <a href="README.ko.md">한국어</a> |
   <a href="README.es.md">Español</a> |
-  <a href="README.fr.md">Français</a> |
+  <strong>Français</strong> |
   <a href="README.de.md">Deutsch</a> |
   <a href="README.pt-BR.md">Português</a> |
   <a href="README.ru.md">Русский</a> |
@@ -19,11 +19,11 @@
   <a href="README.it.md">Italiano</a> |
   <a href="README.nl.md">Nederlands</a> |
   <a href="README.pl.md">Polski</a> |
-  <strong>Türkçe</strong> |
+  <a href="README.tr.md">Türkçe</a> |
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **Coding harness oluşturmak ve yinelemek** için açık kaynak araç seti. İş kodu yok; her subject'in **harness yüzeyinde** çalışır. Üç adım: submodules → Agent-Kit → (isteğe bağlı) sync.
+> Boîte à outils open source pour **construire et itérer des coding harnesses**. Pas de code métier ; cible la **surface harness** de chaque subject. Trois étapes : submodules → Agent-Kit → (optionnel) sync.
 
 | Term | Meaning |
 |------|---------|
@@ -33,7 +33,7 @@
 | **Agent-Kit** | Installer for skills/hooks into Cursor / Claude Code / Codex |
 | **public trusted suite** | `bash tools/harness/test-harness.sh` |
 
-## 1. Başlatma
+## 1. Initialiser
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
@@ -42,7 +42,7 @@ git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. Agent-Kit kurulumu (AI araçları)
+## 2. Installer Agent-Kit (outils IA)
 
 ```bash
 CLIENT=<client> bash tools/harness/agent-kit.sh install
@@ -62,7 +62,7 @@ done
 CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
 ```
 
-## 3. Kendi subject'lerinizi bağlama (isteğe bağlı)
+## 3. Brancher vos subjects (optionnel)
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -73,9 +73,9 @@ bash tools/harness/check-local-absorb.sh --all
 
 ---
 
-Günlük başvuru.
+Référence quotidienne.
 
-## Sık kullanılan komutlar
+## Commandes courantes
 
 | Purpose | Command |
 |---------|---------|
@@ -93,13 +93,13 @@ Günlük başvuru.
 
 See [English README](README.en.md#layout) for the full path table. Client trees are install outputs and stay out of git.
 
-## Belgeler
+## Documentation
 
-- [`docs/README.md`](docs/README.md)
-- [`docs/harness/design.md`](docs/harness/design.md)
-- [`docs/specs/`](docs/specs/)
-- [`AGENTS.md`](AGENTS.md)
+- [`docs/README.md`](../README.md)
+- [`docs/harness/design.md`](../harness/design.md)
+- [`docs/specs/`](../specs/)
+- [`AGENTS.md`](../../AGENTS.md)
 
-## Lisans
+## Licence
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)

@@ -1,7 +1,7 @@
 # coding-harness-kit
 
 <h3 align="center">
-  <a href="README.md">繁體中文</a> |
+  <a href="../../README.md">繁體中文</a> |
   <a href="README.zh-CN.md">简体中文</a> |
   <strong>English</strong> |
   <a href="README.ja.md">日本語</a> |
@@ -129,11 +129,11 @@ Daily reference — consult as needed.
 
 ## Docs
 
-- [`docs/README.md`](docs/README.md) — documentation placement rules
-- [`docs/harness/design.md`](docs/harness/design.md) — this repo's harness design
-- [`docs/specs/`](docs/specs/) — design archive
-- [`AGENTS.md`](AGENTS.md) — completion definition, blacklist, mechanism map
+- [`docs/README.md`](../README.md) — documentation placement rules
+- [`docs/harness/design.md`](../harness/design.md) — this repo's harness design
+- [`docs/specs/`](../specs/) — design archive
+- [`AGENTS.md`](../../AGENTS.md) — completion definition, blacklist, mechanism map
 
 ## License
 
-[MIT](LICENSE)
+[MIT](../../LICENSE)
