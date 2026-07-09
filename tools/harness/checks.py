@@ -464,6 +464,20 @@ def check_hook_wiring() -> None:
         fail(cid, "codex.hooks.json must call hook-router.mjs")
     if "UserPromptSubmit" not in codex_hooks or "prompt-skill-router.mjs" not in codex_hooks:
         fail(cid, "codex.hooks.json must wire UserPromptSubmit → prompt-skill-router.mjs")
+    # Advisor card (mechanism B, degraded): Codex has no PreToolUse(Task); the
+    # subagent-creation surface is SubagentStart, which supports additionalContext.
+    try:
+        codex_json = json.loads(codex_hooks)
+    except json.JSONDecodeError as exc:
+        fail(cid, f"codex.hooks.json is not valid JSON: {exc}")
+        codex_json = {}
+    subagent_start = codex_json.get("hooks", {}).get("SubagentStart", [])
+    codex_advisor_wired = any(
+        "advisor-card.mjs" in json.dumps(group.get("hooks", []))
+        for group in subagent_start
+    )
+    if not codex_advisor_wired:
+        fail(cid, "codex.hooks.json must wire SubagentStart → advisor-card.mjs")
     codex_cfg = (ROOT / "agent-kit" / "hooks" / "clients" / "codex.config.toml").read_text(
         encoding="utf-8"
     )

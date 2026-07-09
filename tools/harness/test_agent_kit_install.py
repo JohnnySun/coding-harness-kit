@@ -296,8 +296,8 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                 "claude install must wire PreToolUse(Task) → advisor-card.mjs",
             )
 
-    def test_cursor_codex_do_not_wire_advisor_card(self) -> None:
-        """Advisor card is Claude-only in P1; Cursor/Codex must NOT wire it."""
+    def test_cursor_does_not_wire_advisor_card(self) -> None:
+        """Cursor has no dispatch/subagent-creation hook surface; must NOT wire it."""
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
             proc = _run_install(
@@ -308,6 +308,12 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             hooks = (out / ".cursor" / "hooks.json").read_text(encoding="utf-8")
             self.assertNotIn("advisor-card.mjs", hooks)
 
+    def test_install_writes_codex_advisor_card_hook(self) -> None:
+        """Codex wires SubagentStart → advisor-card.mjs (mechanism B, degraded form).
+
+        Codex has no PreToolUse(Task); its subagent-creation surface is
+        SubagentStart, which supports hookSpecificOutput.additionalContext.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
             proc = _run_install(
@@ -315,8 +321,20 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                 output_root=out,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
-            hooks = (out / ".codex" / "hooks.json").read_text(encoding="utf-8")
-            self.assertNotIn("advisor-card.mjs", hooks)
+            hooks = json.loads((out / ".codex" / "hooks.json").read_text(encoding="utf-8"))
+            subagent_start = hooks["hooks"].get("SubagentStart", [])
+            advisor_group = next(
+                (
+                    g
+                    for g in subagent_start
+                    if "advisor-card.mjs" in json.dumps(g.get("hooks", []))
+                ),
+                None,
+            )
+            self.assertIsNotNone(
+                advisor_group,
+                "codex install must wire SubagentStart → advisor-card.mjs",
+            )
 
     def test_install_writes_codex_prompt_skill_hook(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

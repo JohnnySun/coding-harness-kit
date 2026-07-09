@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 // Harness-dev advisor card — dispatch-time tier consultation (mechanism B).
-// On subagent creation (Claude `PreToolUse` matcher Task/Agent) this injects a
-// TOOL-AGNOSTIC, SELF-ASSESS tier card as additionalContext so the orchestrator
-// puts the model-tier lookup on the table at the exact dispatch decision point.
+// On subagent creation this injects a TOOL-AGNOSTIC, SELF-ASSESS tier card as
+// additionalContext so the model-tier lookup is on the table at dispatch time.
+// Two client surfaces are supported:
+//   - Claude Code: `PreToolUse` matcher Task/Agent (fires at the orchestrator's
+//     spawn decision point; task text available via tool_input).
+//   - Codex: `SubagentStart` (fires as the subagent spawns; injected as developer
+//     context FOR the subagent. Degraded form of B — no pre-spawn decision gate
+//     and no task text in the payload, per Codex hook docs).
 // It carries NO per-client available-model list / allowlist: the executing model
 // self-assesses its OWN menu against the model-tier-prompting roster ordering.
-// Advisory only — never denies the Task call. Session-deduped via /tmp flag.
+// Advisory only — never denies/blocks the dispatch. Session-deduped via /tmp flag.
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -59,13 +64,19 @@ function isDispatchToolName(toolName = '') {
 }
 
 /**
- * Gate: only dispatch events (PreToolUse + Task/Agent tool) count.
+ * Gate: only subagent-creation events count.
+ * - Claude: `PreToolUse` + Task/Agent tool (orchestrator spawn decision point).
+ * - Codex: `SubagentStart` (fires at subagent-creation scope; no tool_name).
  * @param {string} eventName
  * @param {string} toolName
  * @returns {boolean}
  */
 export function isDispatchEvent(eventName = '', toolName = '') {
-  return String(eventName) === 'PreToolUse' && isDispatchToolName(toolName);
+  const e = String(eventName);
+  // Codex fires SubagentStart when a subagent is about to spawn (no tool_name).
+  if (e === 'SubagentStart') return true;
+  // Claude fires PreToolUse with the Task/Agent tool at the dispatch point.
+  return e === 'PreToolUse' && isDispatchToolName(toolName);
 }
 
 function extractTaskText(payload = {}) {
@@ -97,17 +108,21 @@ export function analyzeDispatchContext({ eventName = '', payload = {} } = {}) {
 
 /**
  * @param {{ eventName?: string, payload?: object }} [opts]
- * @returns {object|null} Claude PreToolUse additionalContext shape, or null (no-op).
+ * @returns {object|null} additionalContext shape (Claude PreToolUse / Codex
+ *   SubagentStart both accept hookSpecificOutput.additionalContext), or null.
  */
 export function buildHookResponse({ eventName = '', payload = {} } = {}) {
   const analysis = analyzeDispatchContext({ eventName, payload });
   if (!analysis.shouldInject) return null;
   const additionalContext = analysis.additionalContext;
+  // Echo the incoming event so the hookSpecificOutput matches the client's
+  // expected event name (PreToolUse for Claude, SubagentStart for Codex).
+  const hookEventName = String(eventName) === 'SubagentStart' ? 'SubagentStart' : 'PreToolUse';
   return {
     additionalContext,
     additional_context: additionalContext,
     hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
+      hookEventName,
       additionalContext,
     },
   };

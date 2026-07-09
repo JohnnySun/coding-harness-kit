@@ -48,14 +48,38 @@ test('generateAdvisorCard embeds the dispatch task text', () => {
   assert.match(card, /幫我審查這個 PR 的安全性/);
 });
 
-test('isDispatchEvent only fires on PreToolUse + Task/Agent tool', () => {
+test('isDispatchEvent fires on PreToolUse + Task/Agent tool (Claude) and SubagentStart (Codex)', () => {
   assert.equal(isDispatchEvent('PreToolUse', 'Task'), true);
   assert.equal(isDispatchEvent('PreToolUse', 'Agent'), true);
+  // Codex fires SubagentStart at subagent-creation scope (no tool_name).
+  assert.equal(isDispatchEvent('SubagentStart', ''), true);
   assert.equal(isDispatchEvent('PreToolUse', 'Bash'), false);
   assert.equal(isDispatchEvent('PreToolUse', 'Write'), false);
   assert.equal(isDispatchEvent('UserPromptSubmit', 'Task'), false);
+  // SubagentStop (after the subagent ends) is not a creation event.
   assert.equal(isDispatchEvent('SubagentStop', ''), false);
   assert.equal(isDispatchEvent('', ''), false);
+});
+
+test('analyzeDispatchContext injects a generic card on Codex SubagentStart (no task text in payload)', () => {
+  const analysis = analyzeDispatchContext({
+    eventName: 'SubagentStart',
+    payload: { agent_id: 'a-1', agent_type: 'general' },
+  });
+  assert.equal(analysis.shouldInject, true);
+  assert.equal(analysis.taskText, '');
+  assert.match(analysis.additionalContext, /Frontier-agentic/);
+  assert.match(analysis.additionalContext, /self-assess/i);
+});
+
+test('buildHookResponse echoes SubagentStart hookEventName for Codex', () => {
+  const resp = buildHookResponse({
+    eventName: 'SubagentStart',
+    payload: { agent_id: 'a-1', agent_type: 'general' },
+  });
+  assert.ok(resp);
+  assert.equal(resp.hookSpecificOutput.hookEventName, 'SubagentStart');
+  assert.match(resp.hookSpecificOutput.additionalContext, /Advisor Card/);
 });
 
 test('analyzeDispatchContext injects on PreToolUse+Task and extracts tool_input.prompt', () => {

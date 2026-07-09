@@ -12,6 +12,17 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node tools/harness/prompt-skill-router.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -42,6 +53,17 @@
             "type": "command",
             "command": "node tools/harness/hook-router.mjs",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node tools/harness/advisor-card.mjs",
+            "timeout": 5
           }
         ]
       }
