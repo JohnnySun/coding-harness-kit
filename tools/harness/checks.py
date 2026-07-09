@@ -457,6 +457,18 @@ def check_hook_wiring() -> None:
     )
     if not advisor_wired:
         fail(cid, "claude.settings.json must wire PreToolUse(Task) → advisor-card.mjs")
+    # Mechanism A (native advisor, Claude Code only): advisorModel must be set to
+    # the strongest tier alias. Anthropic-API-only + pairing (advisor >= main),
+    # so it silently no-ops elsewhere; mechanism B still forces the tier lookup.
+    advisor_model = claude_cfg.get("advisorModel")
+    if advisor_model not in {"fable", "opus", "sonnet"} and not str(
+        advisor_model or ""
+    ).startswith("claude-"):
+        fail(
+            cid,
+            "claude.settings.json must set advisorModel (native advisor, mechanism A) "
+            f"to a tier alias/model id; got {advisor_model!r}",
+        )
     codex_hooks = (ROOT / "agent-kit" / "hooks" / "clients" / "codex.hooks.json").read_text(
         encoding="utf-8"
     )

@@ -296,6 +296,27 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                 "claude install must wire PreToolUse(Task) → advisor-card.mjs",
             )
 
+    def test_install_writes_claude_advisor_model(self) -> None:
+        """Claude install materializes advisorModel (mechanism A: native advisor).
+
+        Anthropic-API-only + experimental; the advisor only attaches when it is
+        at least as capable as the main model, otherwise it silently no-ops.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install", "--client", "claude", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            settings = json.loads((out / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            advisor_model = settings.get("advisorModel")
+            self.assertTrue(
+                advisor_model in {"fable", "opus", "sonnet"}
+                or str(advisor_model or "").startswith("claude-"),
+                f"claude install must set advisorModel to a tier alias/model id; got {advisor_model!r}",
+            )
+
     def test_cursor_does_not_wire_advisor_card(self) -> None:
         """Cursor has no dispatch/subagent-creation hook surface; must NOT wire it."""
         with tempfile.TemporaryDirectory() as tmp:
