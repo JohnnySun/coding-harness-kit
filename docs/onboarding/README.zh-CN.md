@@ -37,6 +37,22 @@
 
 ## 1. 初始化
 
+一键安装（克隆 + submodule + git hooks + Agent-Kit + 公开可信集）：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+```
+
+等价写法：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+```
+
+可选环境变量：`TARGET_DIR`、`CLIENT`（`cursor` / `claude` / `codex` / `codex-native` / `skip`）、`PLUGIN`。
+
+或手动分步执行：
+
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
 cd coding-harness-kit

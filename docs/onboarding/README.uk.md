@@ -35,6 +35,22 @@
 
 ## 1. Ініціалізація
 
+One-line install (clone + submodules + hooks + Agent-Kit + trusted suite):
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+```
+
+Or:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+```
+
+Optional: `TARGET_DIR`, `CLIENT`, `PLUGIN`.
+
+Manual steps:
+
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
 cd coding-harness-kit

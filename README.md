@@ -25,7 +25,7 @@
 
 > 用來**構建 / 迭代 coding harness** 的開源工具倉。  
 > 本倉不含業務源碼；工作對象是各業務倉（subject）的 **harness 表面**。  
-> 克隆後三步即可開始：初始化 submodule → 安裝 Agent-Kit →（可選）同步你的 subject。
+> 一鍵安裝即可開始；或手動：初始化 submodule → 安裝 Agent-Kit →（可選）同步你的 subject。
 
 | 術語 | 含義 |
 |------|------|
@@ -36,6 +36,22 @@
 | **公開可信集** | `bash tools/harness/test-harness.sh`——本倉自己的一鍵驗證（與 L2 CI 同構） |
 
 ## 1. 初始化
+
+一鍵安裝（克隆 + submodule + git hooks + Agent-Kit + 公開可信集）：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+```
+
+等價寫法：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+```
+
+可選環境變數：`TARGET_DIR`、`CLIENT`（`cursor` / `claude` / `codex` / `codex-native` / `skip`）、`PLUGIN`。
+
+或手動分步執行：
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
