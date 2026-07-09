@@ -245,7 +245,95 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             self.assertIn(".cursor/hooks.json", plan["targets"])
             hooks = json.loads((out / ".cursor" / "hooks.json").read_text(encoding="utf-8"))
             self.assertIn("beforeShellExecution", hooks["hooks"])
+            self.assertIn("beforeSubmitPrompt", hooks["hooks"])
             self.assertIn("cursor-hook.mjs", json.dumps(hooks))
+            self.assertIn("prompt-skill-router.mjs", json.dumps(hooks))
+
+    def test_install_writes_claude_prompt_skill_hook(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install",
+                "--client",
+                "claude",
+                "--profile",
+                PROFILE,
+                "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            settings = json.loads((out / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertIn("UserPromptSubmit", settings["hooks"])
+            self.assertIn("prompt-skill-router.mjs", json.dumps(settings))
+
+    def test_install_writes_claude_advisor_card_hook(self) -> None:
+        """Claude install wires PreToolUse(Task) → advisor-card.mjs (dispatch tier card)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install",
+                "--client",
+                "claude",
+                "--profile",
+                PROFILE,
+                "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            settings = json.loads((out / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            pre_tool_use = settings["hooks"]["PreToolUse"]
+            advisor_group = next(
+                (
+                    g
+                    for g in pre_tool_use
+                    if "Task" in str(g.get("matcher", ""))
+                    and "advisor-card.mjs" in json.dumps(g.get("hooks", []))
+                ),
+                None,
+            )
+            self.assertIsNotNone(
+                advisor_group,
+                "claude install must wire PreToolUse(Task) → advisor-card.mjs",
+            )
+
+    def test_cursor_codex_do_not_wire_advisor_card(self) -> None:
+        """Advisor card is Claude-only in P1; Cursor/Codex must NOT wire it."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install", "--client", "cursor", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            hooks = (out / ".cursor" / "hooks.json").read_text(encoding="utf-8")
+            self.assertNotIn("advisor-card.mjs", hooks)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install", "--client", "codex", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            hooks = (out / ".codex" / "hooks.json").read_text(encoding="utf-8")
+            self.assertNotIn("advisor-card.mjs", hooks)
+
+    def test_install_writes_codex_prompt_skill_hook(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install",
+                "--client",
+                "codex",
+                "--profile",
+                PROFILE,
+                "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            hooks = json.loads((out / ".codex" / "hooks.json").read_text(encoding="utf-8"))
+            self.assertIn("UserPromptSubmit", hooks["hooks"])
+            self.assertIn("prompt-skill-router.mjs", json.dumps(hooks))
 
 
 class TestAgentKitCollisionGuards(unittest.TestCase):

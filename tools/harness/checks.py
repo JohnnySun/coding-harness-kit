@@ -6,6 +6,7 @@ Subject gate execution uses the protocol checker + in-repo fixtures only.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -412,6 +413,8 @@ def check_hook_wiring() -> None:
     required = [
         ROOT / "tools" / "harness" / "hook-router.mjs",
         ROOT / "tools" / "harness" / "cursor-hook.mjs",
+        ROOT / "tools" / "harness" / "prompt-skill-router.mjs",
+        ROOT / "tools" / "harness" / "advisor-card.mjs",
         ROOT / "tools" / "harness" / "pre-commit.sh",
         ROOT / "agent-kit" / "hooks" / "clients" / "cursor.hooks.json",
         ROOT / "agent-kit" / "hooks" / "clients" / "claude.settings.json",
@@ -430,16 +433,37 @@ def check_hook_wiring() -> None:
     )
     if "cursor-hook.mjs" not in cursor:
         fail(cid, "cursor.hooks.json must call cursor-hook.mjs")
+    if "beforeSubmitPrompt" not in cursor or "prompt-skill-router.mjs" not in cursor:
+        fail(cid, "cursor.hooks.json must wire beforeSubmitPrompt → prompt-skill-router.mjs")
     claude = (ROOT / "agent-kit" / "hooks" / "clients" / "claude.settings.json").read_text(
         encoding="utf-8"
     )
     if "hook-router.mjs" not in claude:
         fail(cid, "claude.settings.json must call hook-router.mjs")
+    if "UserPromptSubmit" not in claude or "prompt-skill-router.mjs" not in claude:
+        fail(cid, "claude.settings.json must wire UserPromptSubmit → prompt-skill-router.mjs")
+    # Advisor card: dispatch-time tier consultation on subagent creation.
+    # Claude PreToolUse matcher on Task/Agent must route to advisor-card.mjs.
+    try:
+        claude_cfg = json.loads(claude)
+    except json.JSONDecodeError as exc:
+        fail(cid, f"claude.settings.json is not valid JSON: {exc}")
+        claude_cfg = {}
+    pre_tool_use = claude_cfg.get("hooks", {}).get("PreToolUse", [])
+    advisor_wired = any(
+        "Task" in str(group.get("matcher", ""))
+        and "advisor-card.mjs" in json.dumps(group.get("hooks", []))
+        for group in pre_tool_use
+    )
+    if not advisor_wired:
+        fail(cid, "claude.settings.json must wire PreToolUse(Task) → advisor-card.mjs")
     codex_hooks = (ROOT / "agent-kit" / "hooks" / "clients" / "codex.hooks.json").read_text(
         encoding="utf-8"
     )
     if "hook-router.mjs" not in codex_hooks:
         fail(cid, "codex.hooks.json must call hook-router.mjs")
+    if "UserPromptSubmit" not in codex_hooks or "prompt-skill-router.mjs" not in codex_hooks:
+        fail(cid, "codex.hooks.json must wire UserPromptSubmit → prompt-skill-router.mjs")
     codex_cfg = (ROOT / "agent-kit" / "hooks" / "clients" / "codex.config.toml").read_text(
         encoding="utf-8"
     )
@@ -449,8 +473,11 @@ def check_hook_wiring() -> None:
     # If a local install already materialized client trees, they must match SSOT wiring.
     installed = [
         (ROOT / ".cursor" / "hooks.json", "cursor-hook.mjs"),
+        (ROOT / ".cursor" / "hooks.json", "prompt-skill-router.mjs"),
         (ROOT / ".claude" / "settings.json", "hook-router.mjs"),
+        (ROOT / ".claude" / "settings.json", "prompt-skill-router.mjs"),
         (ROOT / ".codex" / "hooks.json", "hook-router.mjs"),
+        (ROOT / ".codex" / "hooks.json", "prompt-skill-router.mjs"),
     ]
     for path, marker in installed:
         if path.is_file() and marker not in path.read_text(encoding="utf-8"):
@@ -523,6 +550,20 @@ def check_no_private_suite_coupling() -> None:
     ok(cid, "no private pin/checkout/snapshot coupling")
 
 
+def check_public_tree_desensitize() -> None:
+    """Public-tree file bodies must not embed private absorb details."""
+    cid = "public-tree-desensitize"
+    from public_tree_desensitize import scan_public_tree  # noqa: WPS433
+
+    findings = scan_public_tree(ROOT)
+    if findings:
+        sample = "; ".join(f"{rel}: {hit}" for rel, hit in findings[:8])
+        more = f" (+{len(findings) - 8} more)" if len(findings) > 8 else ""
+        fail(cid, f"{len(findings)} leak(s) — {sample}{more}")
+        return
+    ok(cid, "no private content in public tree")
+
+
 def ensure_runtime_ledgers() -> None:
     ge = ROOT / "docs" / "harness" / "gate-events.jsonl"
     if not ge.exists():
@@ -542,6 +583,7 @@ def main() -> int:
     print("   manifest source: example (public only)")
 
     check_no_private_suite_coupling()
+    check_public_tree_desensitize()
     check_client_trees_ignored()
     check_manifest_schema(text)
     check_submodule_fixture()

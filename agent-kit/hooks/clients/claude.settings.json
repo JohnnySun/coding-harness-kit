@@ -12,6 +12,18 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/tools/harness/prompt-skill-router.mjs"],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -21,6 +33,17 @@
             "command": "node",
             "args": ["${CLAUDE_PROJECT_DIR}/tools/harness/hook-router.mjs"],
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/tools/harness/advisor-card.mjs"],
+            "timeout": 5
           }
         ]
       }
