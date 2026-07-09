@@ -112,11 +112,31 @@ function denyPreTool(reason) {
   };
 }
 
+/** Advisory only — employer/org brand bans live in AGENTS.md, not as string scanners. */
+export const DESENSITIZE_ADVISORY = [
+  'Harness-dev public-tree desensitize reminder:',
+  'Before writing tools/docs/agent-kit public content, scrub private absorb details:',
+  'no home absolute paths, no real subject id/remote/pin, no internal forge hostnames,',
+  'no employer/org brand names — use generic wording (upstream subject, example remote).',
+  'Do not implement brand bans as source-code string matchers (that re-leaks the token).',
+  'See AGENTS.md blacklist + docs/specs/20260709-desensitize-public-tree/spec.md.',
+].join(' ');
+
 export function processEvent(payload, state, env = process.env) {
   const event = payload.hook_event_name;
 
   if (event === 'SessionStart') {
-    return { state: newState(), response: {} };
+    return {
+      state: newState(),
+      response: {
+        additionalContext: DESENSITIZE_ADVISORY,
+        additional_context: DESENSITIZE_ADVISORY,
+        hookSpecificOutput: {
+          hookEventName: 'SessionStart',
+          additionalContext: DESENSITIZE_ADVISORY,
+        },
+      },
+    };
   }
 
   if (event === 'PostToolUse') {

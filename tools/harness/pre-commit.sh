@@ -26,6 +26,14 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     exit 1
   fi
 
+  # Public-tree *content* desensitization (complements path deny above).
+  # Catches home absolute paths / absolute checkout / private subject ids·remotes
+  # embedded in otherwise-public staged files. Employer/org brand names are an
+  # AI constraint (AGENTS.md), not a ban-list string match here.
+  if [[ -n "$staged" ]]; then
+    python3 tools/harness/public_tree_desensitize.py --staged
+  fi
+
   DOCS_ALLOWED_SUBDIRS='specs|harness|onboarding|arch|rfcs'
   while IFS= read -r path; do
     [[ -z "$path" ]] && continue

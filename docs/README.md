@@ -41,6 +41,8 @@ it belongs under `docs/specs/`.
 ## What NOT to commit
 
 - Private subject remotes, pins, checkouts, snapshots, comparisons
+- Private subject **names / remotes / home absolute paths** inside otherwise-public file bodies (docs, tools, comments)
+- Employer / org brand names or internal forge hostnames in public-tree prose (AI constraint in `AGENTS.md` — not a ban-list string scanner)
 - One-off debugging notes / experiment dumps
 - Plugin vendor docs under `.cursor/plugins/**` or `.codex/plugins/**` (install outputs)
 
@@ -49,7 +51,7 @@ it belongs under `docs/specs/`.
 | Layer | Mechanism |
 |-------|-----------|
 | Constraint | This README + `AGENTS.md` / `CLAUDE.md` |
-| L1 | `tools/harness/pre-commit.sh` blocks **new** `docs/*.md` outside allowed subdirs |
-| Trusted suite | `docs-placement` check in `tools/harness/checks.py` |
+| L1 | `tools/harness/pre-commit.sh` blocks **new** `docs/*.md` outside allowed subdirs; also runs `public_tree_desensitize.py --staged` |
+| Trusted suite | `docs-placement` + `public-tree-desensitize` in `tools/harness/checks.py` |
 
 See also: `docs/specs/20260709-docs-conventions/spec.md`.

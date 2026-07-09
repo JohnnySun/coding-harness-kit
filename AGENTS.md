@@ -38,6 +38,7 @@ bash tools/sync/sync-subjects.sh
 - 把真實 subject remote / pin / snapshot / 比較報告提交進本倉。
 - 把 `.cursor` / `.agents` / `.claude` / `.codex` 客戶端安裝樹提交進本倉（一律走 `agent-kit.sh install`）。
 - 設計文檔寫進 `docs/harness/`、根 `specs/`、`docs/superpowers/`、`docs/technical-design/`，或鬆散的 `docs/*.md`——一律進 `docs/specs/YYYYMMDD-slug/`（見 `docs/README.md`）。
+- **公開樹正文脫敏（AI 行為閘）**：寫入 `tools/` / `docs/` / `agent-kit/` 等公開 pathspec 時，禁止寫特定僱主／組織品牌名、內部 forge 實名、本機絕對路徑、真實 subject id／remote／pin；用「上游 subject」「內部 forge」「example remote」等通用指代。此條**不是**程式碼禁詞掃描——在閘裡嵌入禁詞會再污染公開樹。可執行互補閘只攔通用形態（home 絕對路徑、`subjects/*/checkout` 絕對路徑、本機 manifest 的 id／remote）。
 
 ## 常用命令
 

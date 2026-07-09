@@ -121,3 +121,14 @@ test('提及 git commit 字樣不 deny', () => {
   );
   assert.deepEqual(response, {});
 });
+
+test('SessionStart injects public-tree desensitize advisory', () => {
+  const { state, response } = processEvent(
+    { hook_event_name: 'SessionStart' },
+    newState(),
+  );
+  assert.deepEqual(state.pending, {});
+  assert.match(response.additionalContext, /desensitize reminder/i);
+  assert.match(response.additionalContext, /employer\/org brand/i);
+  assert.match(response.hookSpecificOutput.additionalContext, /AGENTS\.md/);
+});
