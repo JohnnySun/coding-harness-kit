@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      { "command": "node tools/harness/cursor-hook.mjs" }
+    ],
+    "afterFileEdit": [
+      { "command": "node tools/harness/cursor-hook.mjs" }
+    ],
+    "stop": [
+      { "command": "node tools/harness/cursor-hook.mjs" }
+    ]
+  }
+}

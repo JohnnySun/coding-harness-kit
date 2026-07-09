@@ -1,0 +1,11 @@
+# READ-ONLY SENTINEL
+
+Do **not** create files here.
+
+All design documents go to:
+
+```
+docs/specs/YYYYMMDD-slug/
+```
+
+See `docs/README.md`.

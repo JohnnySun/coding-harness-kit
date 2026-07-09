@@ -1,0 +1,16 @@
+{
+  "skill_name_pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+  "skill_description_max_chars": 1024,
+  "skill_discovery_tokenizer_model": "gpt-5",
+  "skill_discovery_context_window_tokens": 256000,
+  "skill_discovery_budget_fraction": 0.02,
+  "skill_discovery_warning_threshold_tokens": 4000,
+  "skill_discovery_error_threshold_tokens": 5000,
+  "local_skills_subdir": "skills/skills",
+  "generated_dirs": [
+    ".agents/",
+    ".codex/",
+    ".cursor/",
+    ".claude/"
+  ]
+}

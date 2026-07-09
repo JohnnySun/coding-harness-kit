@@ -1,0 +1,11 @@
+# READ-ONLY SENTINEL
+
+Do **not** create files or directories here.
+
+Technical design documents go to:
+
+```
+docs/specs/YYYYMMDD-slug/technical-design.md
+```
+
+See `docs/README.md`.

@@ -1,0 +1,3 @@
+[submodule "agent-kit/skills"]
+	path = agent-kit/skills
+	url = https://github.com/JohnnySun/skills.git

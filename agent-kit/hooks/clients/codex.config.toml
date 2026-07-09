@@ -1,0 +1,4 @@
+# Codex project config — enable hooks (silent if omitted).
+# Written by agent-kit install; do not commit the generated .codex/ tree.
+[features]
+hooks = true

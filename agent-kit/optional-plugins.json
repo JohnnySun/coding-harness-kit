@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "plugins": {
+    "superpowers": {
+      "description": "Optional full upstream Superpowers plugin package for users who explicitly opt in.",
+      "source": "https://github.com/obra/superpowers.git",
+      "sourceType": "github",
+      "path": ".",
+      "version": "main",
+      "skills": "*",
+      "clients": {
+        "cursor-cli": {
+          "plugins_dir": ".cursor/plugins",
+          "manifest": ".cursor-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "hooks",
+            "assets",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "cursor": {
+          "plugins_dir": ".cursor/plugins",
+          "manifest": ".cursor-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "hooks",
+            "assets",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "claude": {
+          "plugins_dir": ".claude/plugins",
+          "manifest": ".claude-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "hooks",
+            "assets",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "codex": {
+          "plugins_dir": ".codex/plugins",
+          "manifest": ".codex-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "hooks",
+            "assets",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "codex-native": {
+          "plugins_dir": ".codex/plugins",
+          "manifest": ".codex-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "hooks",
+            "assets",
+            "README.md",
+            "LICENSE"
+          ]
+        }
+      }
+    },
+    "mattpocock-skills": {
+      "description": "Optional Matt Pocock skills plugin (engineering + productivity primitives). Excludes code-review and handoff — they collide with harness-dev local methodology skills.",
+      "source": "https://github.com/mattpocock/skills.git",
+      "sourceType": "github",
+      "path": ".",
+      "version": "main",
+      "skills": [
+        "ask-matt",
+        "codebase-design",
+        "diagnosing-bugs",
+        "domain-modeling",
+        "grill-me",
+        "grill-with-docs",
+        "grilling",
+        "implement",
+        "improve-codebase-architecture",
+        "prototype",
+        "research",
+        "setup-matt-pocock-skills",
+        "tdd",
+        "teach",
+        "to-issues",
+        "to-prd",
+        "triage",
+        "writing-great-skills"
+      ],
+      "clients": {
+        "claude": {
+          "plugins_dir": ".claude/plugins",
+          "manifest": ".claude-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "docs",
+            "scripts",
+            "CONTEXT.md",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "cursor-cli": {
+          "plugins_dir": ".cursor/plugins",
+          "manifest": ".claude-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "docs",
+            "scripts",
+            "CONTEXT.md",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "cursor": {
+          "plugins_dir": ".cursor/plugins",
+          "manifest": ".claude-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "docs",
+            "scripts",
+            "CONTEXT.md",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "codex": {
+          "plugins_dir": ".codex/plugins",
+          "manifest": ".claude-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "docs",
+            "scripts",
+            "CONTEXT.md",
+            "README.md",
+            "LICENSE"
+          ]
+        },
+        "codex-native": {
+          "plugins_dir": ".codex/plugins",
+          "manifest": ".claude-plugin/plugin.json",
+          "assets": [
+            "skills",
+            "docs",
+            "scripts",
+            "CONTEXT.md",
+            "README.md",
+            "LICENSE"
+          ]
+        }
+      }
+    }
+  }
+}

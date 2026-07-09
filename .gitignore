@@ -1,0 +1,34 @@
+# L1 private — subject registry/clones & absorb products (not for public git).
+# Only subjects/manifest.example.yaml is tracked under subjects/.
+subjects/*
+!subjects/manifest.example.yaml
+snapshots/
+comparisons/
+
+# Runtime ledgers / reports (machine-written; may echo subject paths)
+docs/harness/gate-events.jsonl
+docs/harness/reports/
+
+# Scratch / one-off inspect trees
+_inspect/
+
+# agent-kit install local venv (uv)
+agent-kit/install/.venv/
+
+# Generated agent client trees (agent-kit install). Never commit these —
+# regenerate with: CLIENT=<cursor|claude|codex|codex-native> bash tools/harness/agent-kit.sh install
+.agents/
+.claude/
+.codex/
+.cursor/
+.trae/
+.trae-cn/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+*.swp
+*~

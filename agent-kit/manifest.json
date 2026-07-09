@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "harness-dev": {
+      "skills": [
+        "code-review",
+        "handoff",
+        "harness-builder",
+        "harness-operate",
+        "model-tier-prompting",
+        "plan-review",
+        "refine",
+        "skill-creator",
+        "workflow-design",
+        "writing-human-readable-docs"
+      ],
+      "commands": [],
+      "mcp": [],
+      "hooks": []
+    }
+  },
+  "clients": {
+    "cursor-cli": {
+      "skills_dir": ".cursor/skills",
+      "commands_dir": ".cursor/commands",
+      "mcp_path": ".cursor/mcp.json",
+      "hooks_path": ".cursor/hooks.json"
+    },
+    "cursor": {
+      "skills_dir": ".cursor/skills",
+      "commands_dir": ".cursor/commands",
+      "mcp_path": ".cursor/mcp.json",
+      "hooks_path": ".cursor/hooks.json"
+    },
+    "claude": {
+      "skills_dir": ".claude/skills",
+      "commands_dir": ".claude/commands",
+      "mcp_path": ".mcp.json",
+      "settings_path": ".claude/settings.json"
+    },
+    "codex": {
+      "skills_dir": ".agents/skills",
+      "commands_dir": ".agents/commands",
+      "config_path": ".codex/config.toml",
+      "hooks_path": ".codex/hooks.json"
+    },
+    "codex-native": {
+      "skills_dir": ".codex/skills",
+      "commands_dir": ".codex/commands"
+    }
+  }
+}

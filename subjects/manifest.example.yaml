@@ -1,0 +1,40 @@
+# Public example registry — copy to subjects/manifest.yaml (gitignored) before sync.
+# Real subject remotes / pins stay local; do not commit private hosts or SHAs.
+#
+#   cp subjects/manifest.example.yaml subjects/manifest.yaml
+#   # edit remotes, then:
+#   bash tools/sync/sync-subjects.sh
+#   bash tools/sync/sync-subjects.sh <id> --pin
+#
+# trusted_suite / fixture_root: subject-gate protocol (public CI uses fixtures only).
+
+schema_version: 1
+
+subjects:
+  demo-coding-harness-min:
+    display_name: Demo Minimal Coding Harness
+    remote: https://github.com/example/harness-demo-min.git
+    default_branch: main
+    default_submodules: []
+    harness_paths:
+      - AGENTS.md
+      - scripts/harness
+    trusted_suite: bash scripts/harness/test-harness.sh
+    fixture_root: testdata/subjects/demo-coding-harness-min
+    notes: >
+      In-repo fixture: minimal coding harness trusted suite.
+      Public CI runs this via tools/harness/check_subject_gates.py — no private clone.
+
+  demo-coding-harness-red:
+    display_name: Demo Red Coding Harness
+    remote: https://github.com/example/harness-demo-red.git
+    default_branch: main
+    default_submodules: []
+    harness_paths:
+      - AGENTS.md
+      - scripts/harness
+    trusted_suite: bash scripts/harness/test-harness.sh
+    fixture_root: testdata/subjects/demo-coding-harness-red
+    notes: >
+      Always-red fixture for protocol negative tests (not required green in CI all-pass;
+      used by unit tests that assert failure propagation).

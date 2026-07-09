@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "plugins": {
+    "superpowers": {
+      "source": "https://github.com/obra/superpowers.git",
+      "sourceType": "github",
+      "ref": "6fd4507659784c351abbd2bc264c7162cfd386dc",
+      "path": "."
+    },
+    "mattpocock-skills": {
+      "source": "https://github.com/mattpocock/skills.git",
+      "sourceType": "github",
+      "ref": "16a2a5cd00b4416f673f4ff38c7971a04dd708e7",
+      "path": "."
+    }
+  }
+}

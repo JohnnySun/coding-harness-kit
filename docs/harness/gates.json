@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "module": "harness-dev",
+  "trusted_suite": "bash tools/harness/test-harness.sh",
+  "iteration_hint": "node --test tools/harness/hook-router.test.mjs",
+  "known_failures": {},
+  "critical_paths": [
+    {
+      "glob": "tools/harness/**",
+      "required_spec": "tools/harness/test-harness.sh",
+      "reason": "本倉公開可信集"
+    },
+    {
+      "glob": "agent-kit/**",
+      "required_spec": "tools/harness/test-harness.sh",
+      "reason": "agent-kit install/validate/external/optional-plugin 契約"
+    },
+    {
+      "glob": "subjects/manifest.example.yaml",
+      "required_spec": "tools/harness/test-harness.sh",
+      "reason": "公開 registry 範本合法性"
+    },
+    {
+      "glob": ".github/workflows/**",
+      "required_spec": "tools/harness/test-harness.sh",
+      "reason": "L2 CI 與公開可信集同構"
+    },
+    {
+      "glob": "docs/**",
+      "required_spec": "tools/harness/test-harness.sh",
+      "reason": "docs placement + harness ledgers"
+    },
+    {
+      "glob": "testdata/**",
+      "required_spec": "tools/harness/test-harness.sh",
+      "reason": "公開 fixture / subject-gate protocol"
+    }
+  ],
+  "debts": [],
+  "closed_debts": [
+    {
+      "id": "cursor-stop-soft-only",
+      "closed": "2026-07-09",
+      "resolution": "Align workspace-shell topology: Cursor stop stays fire-and-forget; claimed-done hard gate is beforeShellExecution commit-deny + L1 pre-commit (already wired). Not a remaining debt."
+    },
+    {
+      "id": "l2-ci",
+      "closed": "2026-07-09",
+      "resolution": "GitHub Actions .github/workflows/harness-trusted.yml runs the same public trusted suite on main push/PR; suite decoupled from private subjects/**."
+    }
+  ]
+}

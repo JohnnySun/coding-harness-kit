@@ -1,0 +1,11 @@
+# READ-ONLY SENTINEL
+
+Do **not** create files or directories here.
+
+Superpowers / brainstorm / design-plan output goes to:
+
+```
+docs/specs/YYYYMMDD-slug/
+```
+
+See `docs/README.md`.
