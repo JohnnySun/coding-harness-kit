@@ -476,25 +476,39 @@ def check_hook_wiring() -> None:
         fail(cid, "codex.hooks.json must call hook-router.mjs")
     if "UserPromptSubmit" not in codex_hooks or "prompt-skill-router.mjs" not in codex_hooks:
         fail(cid, "codex.hooks.json must wire UserPromptSubmit → prompt-skill-router.mjs")
-    # Advisor card (mechanism B, degraded): Codex has no PreToolUse(Task); the
-    # subagent-creation surface is SubagentStart, which supports additionalContext.
+    # Codex has NO orchestrator-facing pre-spawn hook: SubagentStart delivers
+    # additionalContext to the CHILD (post-decision), so it must NOT be wired to
+    # the advisor card. The cross-client dispatch guidance is advisory prose in
+    # AGENTS.md / CLAUDE.md (no hook, no hard gate) — asserted below.
     try:
         codex_json = json.loads(codex_hooks)
     except json.JSONDecodeError as exc:
         fail(cid, f"codex.hooks.json is not valid JSON: {exc}")
         codex_json = {}
     subagent_start = codex_json.get("hooks", {}).get("SubagentStart", [])
-    codex_advisor_wired = any(
+    if any(
         "advisor-card.mjs" in json.dumps(group.get("hooks", []))
         for group in subagent_start
-    )
-    if not codex_advisor_wired:
-        fail(cid, "codex.hooks.json must wire SubagentStart → advisor-card.mjs")
+    ):
+        fail(cid, "codex.hooks.json must NOT wire SubagentStart → advisor-card.mjs "
+                  "(child-facing / post-decision)")
     codex_cfg = (ROOT / "agent-kit" / "hooks" / "clients" / "codex.config.toml").read_text(
         encoding="utf-8"
     )
     if "hooks" not in codex_cfg or "true" not in codex_cfg:
         fail(cid, "codex.config.toml must enable features.hooks")
+
+    # Cross-client dispatch guidance (no hook on Codex/Cursor): the always-loaded
+    # AGENTS.md + CLAUDE.md must carry the consult-model-tier-before-dispatch clause.
+    for rules_name in ("AGENTS.md", "CLAUDE.md"):
+        rules_path = ROOT / rules_name
+        if not rules_path.is_file():
+            fail(cid, f"missing {rules_name}")
+            continue
+        rules_text = rules_path.read_text(encoding="utf-8")
+        if "派工前先查層級" not in rules_text or "model-tier-prompting" not in rules_text:
+            fail(cid, f"{rules_name} must carry the dispatch-consult pointer "
+                      "(派工前先查層級 → model-tier-prompting)")
 
     # If a local install already materialized client trees, they must match SSOT wiring.
     installed = [

@@ -57,17 +57,6 @@
         ]
       }
     ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node tools/harness/advisor-card.mjs",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
     "SubagentStop": [
       {
         "hooks": [

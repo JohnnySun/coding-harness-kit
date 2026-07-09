@@ -2,18 +2,19 @@
 // Harness-dev advisor card — dispatch-time tier consultation (mechanism B).
 // On subagent creation this injects a TOOL-AGNOSTIC, SELF-ASSESS tier card as
 // additionalContext so the model-tier lookup is on the table at dispatch time.
-// Two client surfaces are supported:
+// The ONLY orchestrator-facing pre-spawn surface is:
 //   - Claude Code: `PreToolUse` matcher Task/Agent (fires at the orchestrator's
-//     spawn decision point; task text available via tool_input).
-//   - Codex: `SubagentStart` (fires as the subagent spawns; injected as developer
-//     context FOR the subagent. Degraded form of B — no pre-spawn decision gate
-//     and no task text in the payload, per Codex hook docs).
+//     spawn decision point BEFORE the spawn tool runs; task text via tool_input).
+//     additionalContext returns to the ORCHESTRATOR so it can shape subagent
+//     form / model / prompt-thickness.
+// Codex/Cursor have NO orchestrator-facing pre-spawn hook (Codex `SubagentStart`
+// delivers context to the CHILD post-decision; Cursor `preToolUse`/`subagentStart`
+// are allow/deny only). Their advisor card rides the prompt-submit router instead
+// (see prompt-skill-router.mjs dispatch-intent path), NOT this script.
 // It carries NO per-client available-model list / allowlist: the executing model
 // self-assesses its OWN menu against the model-tier-prompting roster ordering.
-// Advisory only — never denies/blocks the dispatch. Session-deduped via /tmp flag.
+// Advisory only — never denies/blocks the dispatch. Always emitted on qualify.
 
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -64,17 +65,16 @@ function isDispatchToolName(toolName = '') {
 }
 
 /**
- * Gate: only subagent-creation events count.
- * - Claude: `PreToolUse` + Task/Agent tool (orchestrator spawn decision point).
- * - Codex: `SubagentStart` (fires at subagent-creation scope; no tool_name).
+ * Gate: only the orchestrator-facing pre-spawn event counts.
+ * - Claude: `PreToolUse` + Task/Agent tool (orchestrator spawn decision point,
+ *   BEFORE the spawn tool runs). This is the only true pre-spawn injection.
+ * Codex `SubagentStart` (child-facing, post-decision) is intentionally NOT here.
  * @param {string} eventName
  * @param {string} toolName
  * @returns {boolean}
  */
 export function isDispatchEvent(eventName = '', toolName = '') {
   const e = String(eventName);
-  // Codex fires SubagentStart when a subagent is about to spawn (no tool_name).
-  if (e === 'SubagentStart') return true;
   // Claude fires PreToolUse with the Task/Agent tool at the dispatch point.
   return e === 'PreToolUse' && isDispatchToolName(toolName);
 }
@@ -108,51 +108,22 @@ export function analyzeDispatchContext({ eventName = '', payload = {} } = {}) {
 
 /**
  * @param {{ eventName?: string, payload?: object }} [opts]
- * @returns {object|null} additionalContext shape (Claude PreToolUse / Codex
- *   SubagentStart both accept hookSpecificOutput.additionalContext), or null.
+ * @returns {object|null} Claude PreToolUse additionalContext shape (returned to
+ *   the ORCHESTRATOR before the spawn tool runs), or null on non-dispatch.
  */
 export function buildHookResponse({ eventName = '', payload = {} } = {}) {
   const analysis = analyzeDispatchContext({ eventName, payload });
   if (!analysis.shouldInject) return null;
   const additionalContext = analysis.additionalContext;
-  // Echo the incoming event so the hookSpecificOutput matches the client's
-  // expected event name (PreToolUse for Claude, SubagentStart for Codex).
-  const hookEventName = String(eventName) === 'SubagentStart' ? 'SubagentStart' : 'PreToolUse';
+  // Only PreToolUse(Task|Agent) qualifies, so hookEventName is always PreToolUse.
   return {
     additionalContext,
     additional_context: additionalContext,
     hookSpecificOutput: {
-      hookEventName,
+      hookEventName: 'PreToolUse',
       additionalContext,
     },
   };
-}
-
-function sessionFlagPath(payload = {}) {
-  const sid = payload.session_id ?? payload.sessionId ?? process.ppid ?? 'anon';
-  return path.join(os.tmpdir(), `harness-dev-advisor-card-${sid}.json`);
-}
-
-function loadInjected(flagPath) {
-  try {
-    return JSON.parse(fs.readFileSync(flagPath, 'utf8'));
-  } catch {
-    return { injected: {} };
-  }
-}
-
-function saveInjected(flagPath, state) {
-  try {
-    fs.writeFileSync(flagPath, JSON.stringify(state));
-  } catch {
-    // best-effort; advisory only
-  }
-}
-
-function alreadyInjected(state, now = Date.now()) {
-  const TTL = 2 * 60 * 60 * 1000;
-  const prev = state.injected['advisor-card'];
-  return typeof prev === 'number' && now - prev < TTL;
 }
 
 async function readStdin() {
@@ -180,17 +151,8 @@ async function main() {
     return;
   }
 
-  // Session-dedupe so fan-out dispatches don't re-nag within one shell tree.
-  const flagPath = sessionFlagPath(payload);
-  const state = loadInjected(flagPath);
-  const now = Date.now();
-  if (alreadyInjected(state, now)) {
-    process.stdout.write('{}\n');
-    return;
-  }
-  state.injected['advisor-card'] = now;
-  saveInjected(flagPath, state);
-
+  // Always emit on qualify: every dispatch decision should see the tier card
+  // (no session dedup — re-injection at each spawn point is the point).
   process.stdout.write(`${JSON.stringify(resp)}\n`);
 }
 

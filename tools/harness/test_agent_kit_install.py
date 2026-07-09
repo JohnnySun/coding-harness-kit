@@ -329,11 +329,12 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             hooks = (out / ".cursor" / "hooks.json").read_text(encoding="utf-8")
             self.assertNotIn("advisor-card.mjs", hooks)
 
-    def test_install_writes_codex_advisor_card_hook(self) -> None:
-        """Codex wires SubagentStart → advisor-card.mjs (mechanism B, degraded form).
+    def test_codex_does_not_wire_subagent_start_advisor_card(self) -> None:
+        """Codex must NOT wire SubagentStart → advisor-card.mjs.
 
-        Codex has no PreToolUse(Task); its subagent-creation surface is
-        SubagentStart, which supports hookSpecificOutput.additionalContext.
+        SubagentStart delivers additionalContext to the CHILD subagent
+        (post-decision) — useless for the orchestrator's dispatch decision. The
+        Codex advisor card now rides UserPromptSubmit → prompt-skill-router.mjs.
         """
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
@@ -352,9 +353,10 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                 ),
                 None,
             )
-            self.assertIsNotNone(
+            self.assertIsNone(
                 advisor_group,
-                "codex install must wire SubagentStart → advisor-card.mjs",
+                "codex must NOT wire SubagentStart → advisor-card.mjs "
+                "(child-facing; advisor rides UserPromptSubmit router)",
             )
 
     def test_install_writes_codex_prompt_skill_hook(self) -> None:

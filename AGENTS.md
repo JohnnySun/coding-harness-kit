@@ -79,3 +79,7 @@ CLIENT=cursor bash tools/harness/agent-kit.sh install
 ## Skills
 
 方法論 skills 經 `bash tools/harness/agent-kit.sh install` 暴露於本機 `.cursor` / `.agents` / `.claude` / `.codex` `/skills/`，源在 `agent-kit/skills/skills/`（submodule → `github.com/JohnnySun/skills`）。客戶端樹不進 git。external skills / optional plugins 走 lock 檔；插件需 `PLUGIN=…`。優先：`harness-builder`、`harness-operate`、`plan-review`、`model-tier-prompting`。
+
+## 派工前先查層級（advisory）
+
+派子代理 / 委派 / fan-out 前，先諮詢 `model-tier-prompting`（`agent-kit/skills/skills/model-tier-prompting/`）做一次層級自評：依 roster 的 Intelligence Index 給你當前可用模型排序、挑最強可用者，再按任務難度選子代理形態與提示厚度。理由：dispatch 決策點若沒把層級查表上桌，形態/模型/提示厚度全憑即興。此為**指引非硬閘**——只有 Claude 有 `PreToolUse(Task)` 能在 spawn 前把卡片注入 orchestrator；Codex/Cursor 無 orchestrator 前置 dispatch 閘，靠本條自覺遵循。
