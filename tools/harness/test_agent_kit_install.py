@@ -376,6 +376,23 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             self.assertIn("UserPromptSubmit", hooks["hooks"])
             self.assertIn("prompt-skill-router.mjs", json.dumps(hooks))
 
+    def test_install_writes_codex_schema_supported_top_level_fields(self) -> None:
+        """Generated Codex hooks must not contain unknown top-level fields."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install",
+                "--client",
+                "codex",
+                "--profile",
+                PROFILE,
+                "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            hooks = json.loads((out / ".codex" / "hooks.json").read_text(encoding="utf-8"))
+            self.assertEqual(set(hooks), {"description", "hooks"})
+
 
 class TestAgentKitCollisionGuards(unittest.TestCase):
     def test_install_resolved_skills_collision(self) -> None:

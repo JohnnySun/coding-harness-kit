@@ -1,5 +1,5 @@
 {
-  "_comment": "Enable [features] hooks=true in .codex/config.toml; run /hooks to trust after changes.",
+  "description": "Enable [features] hooks=true in .codex/config.toml; run /hooks to trust after changes.",
   "hooks": {
     "SessionStart": [
       {
