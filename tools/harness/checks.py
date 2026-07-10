@@ -498,8 +498,8 @@ def check_hook_wiring() -> None:
     if "hooks" not in codex_cfg or "true" not in codex_cfg:
         fail(cid, "codex.config.toml must enable features.hooks")
 
-    # Cross-client dispatch guidance (no hook on Codex/Cursor): the always-loaded
-    # AGENTS.md + CLAUDE.md must carry the consult-model-tier-before-dispatch clause.
+    # Cross-client dispatch policy (no hook on Codex/Cursor): the always-loaded
+    # AGENTS.md + CLAUDE.md must carry autonomy, safety, propagation, and tier guidance.
     for rules_name in ("AGENTS.md", "CLAUDE.md"):
         rules_path = ROOT / rules_name
         if not rules_path.is_file():
@@ -510,9 +510,11 @@ def check_hook_wiring() -> None:
             "## 子代理自主派工": "autonomous dispatch heading",
             "不需要使用者主動要求或逐次批准": "no per-dispatch user approval",
             "不擴張任務範圍或操作權限": "scope and permission boundary",
-            "沒有等價授權": "future subject upgrade propagation",
+            "沒有等價授權則把本節的授權與安全邊界納入該次升級":
+                "future subject upgrade propagation",
             "派工前先查層級": "dispatch tier consultation",
             "model-tier-prompting": "model-tier guidance",
+            "不是使用子代理的許可閘": "tier guidance is advisory, not permission gate",
         }
         for marker, description in required_dispatch_rules.items():
             if marker not in rules_text:

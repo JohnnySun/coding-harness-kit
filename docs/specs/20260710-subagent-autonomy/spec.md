@@ -1,6 +1,6 @@
 # 子代理自主派工授權
 
-> 狀態：設計已核准，待實作
+> 狀態：已實作
 
 ## 問題
 
@@ -80,3 +80,11 @@ skill 或強制派工機制。
 4. 未來 subject 升級有明確的「已有則跳過、缺少則補齊、衝突則保留並報告」流程。
 5. 本次 git diff 不包含任何 subject、模板或客戶端安裝樹變更。
 6. 全量可信集通過。
+
+## 實作證據
+
+- 根 `AGENTS.md` 已加入自主派工授權、既有權限邊界及後續 subject 升級規則；`CLAUDE.md` 透過 symlink 同步生效。
+- `tools/harness/checks.py` 會拒絕缺少授權標題、免逐次批准、權限邊界、subject 傳播規則或 `model-tier-prompting` advisory 的規則檔。
+- Red：規則文本尚未加入時，公開可信集因 `AGENTS.md` / `CLAUDE.md` 各缺少四個自主派工標記而產生 8 個預期 failure。
+- Green：加入根規則後，`python3 tools/harness/checks.py` 與 `bash tools/harness/test-harness.sh` 均通過。
+- Review：`code-review` 使用 3 個 sweep；確認並修復 1 個 plan-alignment blocker（可信集未完整鎖住 subject 補齊動作與「非許可閘」語義），held-out sweep 無新 blocker，結果為 `passed`。
