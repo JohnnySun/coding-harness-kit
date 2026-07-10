@@ -506,9 +506,17 @@ def check_hook_wiring() -> None:
             fail(cid, f"missing {rules_name}")
             continue
         rules_text = rules_path.read_text(encoding="utf-8")
-        if "派工前先查層級" not in rules_text or "model-tier-prompting" not in rules_text:
-            fail(cid, f"{rules_name} must carry the dispatch-consult pointer "
-                      "(派工前先查層級 → model-tier-prompting)")
+        required_dispatch_rules = {
+            "## 子代理自主派工": "autonomous dispatch heading",
+            "不需要使用者主動要求或逐次批准": "no per-dispatch user approval",
+            "不擴張任務範圍或操作權限": "scope and permission boundary",
+            "沒有等價授權": "future subject upgrade propagation",
+            "派工前先查層級": "dispatch tier consultation",
+            "model-tier-prompting": "model-tier guidance",
+        }
+        for marker, description in required_dispatch_rules.items():
+            if marker not in rules_text:
+                fail(cid, f"{rules_name} missing {description}: {marker}")
 
     # If a local install already materialized client trees, they must match SSOT wiring.
     installed = [

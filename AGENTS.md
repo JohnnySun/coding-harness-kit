@@ -80,6 +80,16 @@ CLIENT=cursor bash tools/harness/agent-kit.sh install
 
 方法論 skills 經 `bash tools/harness/agent-kit.sh install` 暴露於本機 `.cursor` / `.agents` / `.claude` / `.codex` `/skills/`，源在 `agent-kit/skills/skills/`（submodule → `github.com/JohnnySun/skills`）。客戶端樹不進 git。external skills / optional plugins 走 lock 檔；插件需 `PLUGIN=…`。優先：`harness-builder`、`harness-operate`、`plan-review`、`model-tier-prompting`。
 
-## 派工前先查層級（advisory）
+## 子代理自主派工
 
-派子代理 / 委派 / fan-out 前，先諮詢 `model-tier-prompting`（`agent-kit/skills/skills/model-tier-prompting/`）做一次層級自評：依 roster 的 Intelligence Index 給你當前可用模型排序、挑最強可用者，再按任務難度選子代理形態與提示厚度。理由：dispatch 決策點若沒把層級查表上桌，形態/模型/提示厚度全憑即興。此為**指引非硬閘**。
+本倉明確允許並授權 Agent 自主使用子代理。只要工作仍在使用者原始任務範圍內，且 Agent 判斷委派、平行處理或上下文隔離能提升品質、速度或可靠性，就可以直接派出子代理；不需要使用者主動要求或逐次批准。不得把「使用者未明示要求使用子代理」當成不派工的理由。
+
+這項授權不擴張任務範圍或操作權限。子代理繼承本倉規則及既有 permission / approval 邊界；破壞性操作、外部副作用或實質範圍變更，仍須依原規則取得授權。主 Agent 對任務拆分、結果整合與最終驗證負責，不得把子代理的完成聲明直接當成驗證證據。這是允許自主判斷，不是要求每個任務都必須派工；緊密耦合、無法獨立驗收或派工成本高於收益的工作，可由主 Agent 直接完成。
+
+### 派工前先查層級（advisory）
+
+決定派工後，先諮詢 `model-tier-prompting`（`agent-kit/skills/skills/model-tier-prompting/`）做層級自評：依 roster 的 Intelligence Index 排序當前可用模型，再按任務難度選擇子代理形態、模型與提示厚度。這是派工品質指引，不是使用子代理的許可閘。
+
+### 後續 subject 升級
+
+使用本倉為其他 subject 導入、同步或升級 harness 時，必須檢查目標倉實際生效的 Agent 規則。已有語義等價的自主派工授權則不重複添加；沒有等價授權則把本節的授權與安全邊界納入該次升級；已有明確且更嚴格的限制則不靜默覆寫，保留限制並向使用者報告差異。
