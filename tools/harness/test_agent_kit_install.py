@@ -33,6 +33,34 @@ LOCAL_SKILLS = [
     "writing-human-readable-docs",
 ]
 
+TDD_SCOPE_START = "<!-- tdd-scope-contract:start -->"
+TDD_SCOPE_END = "<!-- tdd-scope-contract:end -->"
+CANONICAL_TDD_SCOPE = """
+**TDD 必做**：工作改變可維護、可重現的行為，包括 reusable code、parser、
+validator、generator、installer、recovery、可重現的 regression fix、
+harness/hook/policy enforcement（含 gate）、release artifact、stable contract，以及危險 write path。先寫能因
+缺少該行為而失敗的測試（Red），再做最小實作（Green）。
+
+**TDD 不要求**：探索、研究、唯讀 terminal 查證、設計、規劃、純文檔、證據整理、
+compiler diagnostics、throwaway probe，以及行為不變的結構搬移。若過程開始改變
+任何可維護行為或產物契約，亦即行為改變的 maintained artifact 必須重新分類並切回 TDD。
+
+分類只決定是否需要 Red→Green；**驗證獨立於 TDD**。免 TDD 的工作仍須用與風險
+相稱的檢查證明產物正確，不能把「免寫測試」解讀成「免驗證」。
+"""
+
+
+def _normalize_policy(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.strip().splitlines())
+
+
+def _tdd_scope_contract_matches(text: str) -> bool:
+    if text.count(TDD_SCOPE_START) != 1 or text.count(TDD_SCOPE_END) != 1:
+        return False
+    start = text.index(TDD_SCOPE_START) + len(TDD_SCOPE_START)
+    end = text.index(TDD_SCOPE_END, start)
+    return _normalize_policy(text[start:end]) == _normalize_policy(CANONICAL_TDD_SCOPE)
+
 
 def _run_install(*args: str, output_root: Path | None = None) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
@@ -122,6 +150,51 @@ class TestAgentKitValidate(unittest.TestCase):
 
 
 class TestAgentKitDryRunInstall(unittest.TestCase):
+    def test_plan_reviewer_reclassifies_behavior_changing_docs_for_tdd(self) -> None:
+        reviewer_prompt = (
+            AGENT_KIT
+            / "skills"
+            / "skills"
+            / "plan-review"
+            / "references"
+            / "reviewer-prompts.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "docs、skill 或 policy 若改變 maintained behavior 或 artifact contract，必須重新分類並要求 TDD",
+            " ".join(reviewer_prompt.split()),
+        )
+
+    def test_installed_harness_operate_preserves_conditional_tdd_scope(self) -> None:
+        """Shared source and installed clients expose the same scoped TDD contract."""
+        source = AGENT_KIT / "skills" / "skills" / "harness-operate" / "SKILL.md"
+        source_text = source.read_text(encoding="utf-8")
+        self.assertTrue(_tdd_scope_contract_matches(source_text), "source TDD scope differs from canonical policy")
+
+        contradictory = source_text.replace(
+            TDD_SCOPE_END,
+            "純文檔永遠不需要 TDD，即使改變 maintained artifact contract。\n" + TDD_SCOPE_END,
+        )
+        self.assertFalse(
+            _tdd_scope_contract_matches(contradictory),
+            "contradictory additions inside the bounded policy must be rejected",
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install",
+                "--client",
+                "codex",
+                "--profile",
+                PROFILE,
+                "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            installed = out / ".agents" / "skills" / "harness-operate" / "SKILL.md"
+            self.assertTrue(installed.is_file())
+            self.assertEqual(installed.read_text(encoding="utf-8"), source_text)
+
     def test_each_client_dry_run_links_local_skills(self) -> None:
         skills_dirs = {
             "cursor": ".cursor/skills",
