@@ -23,35 +23,34 @@
   <a href="docs/onboarding/README.uk.md">Українська</a>
 </h3>
 
-> 用來**構建 / 迭代 coding harness** 的開源工具倉。  
-> 本倉不含業務源碼；工作對象是各業務倉（subject）的 **harness 表面**。  
-> 一鍵安裝即可開始；或手動：初始化 submodule → 安裝 Agent-Kit →（可選）同步你的 subject。
+> **這間改裝廠改的是你的車：coding harness。** 它是包在產品倉外面的 AI 開發防護層；產品倉（subject）擁有這台車，業務源碼是引擎，本廠不拆。
+> 最短路線：執行一鍵安裝 → 為 Cursor／Claude Code／Codex 裝 Agent-Kit →（可選）接上真實 subject，依序 sync、pin、檢查 `harness-ready`。零件裝完要上測功機，不能只看烤漆。
 
-| 術語 | 含義 |
+| 術語 | 含義（改裝廠對照） |
 |------|------|
-| **coding harness** | 包在業務倉外層的 AI 開發防護體系：規則、skills、hooks、可信集、帳本 |
-| **subject** | 被本工具吸收 / 比較的一個業務倉（本機 clone，不進本倉 git） |
-| **harness 表面** | subject 裡與 harness 相關的路徑（如 `AGENTS.md`、skills、hooks），不是業務源碼 |
-| **Agent-Kit** | 把方法論 skills / hooks 模板安裝到 Cursor、Claude Code、Codex 等客戶端的安裝器 |
-| **公開可信集** | `bash tools/harness/test-harness.sh`——本倉自己的一鍵驗證（與 L2 CI 同構） |
+| **coding harness** | 你的「車」：包在業務倉外層的 AI 開發防護體系（規則、skills、hooks、可信集、帳本） |
+| **subject** | 擁有這台車的產品／業務倉（本機 clone，不進本倉 git） |
+| **harness 表面** | 零件安裝面：`AGENTS.md`、skills、hooks 等；業務源碼不在工單內 |
+| **Agent-Kit** | 零件架：把方法論 skills / hooks 模板裝進 Cursor、Claude Code、Codex 等客戶端 |
+| **公開可信集** | 測功機：`bash tools/harness/test-harness.sh`（與 L2 CI 同構） |
 
-## 1. 初始化
+## 1. 進廠（初始化）
 
-一鍵安裝（克隆 + submodule + git hooks + Agent-Kit + 公開可信集）：
+最快的工位是一鍵安裝。它會完成 clone、submodule、git hooks、Agent-Kit，並跑公開可信集：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-等價寫法：
+若你的 shell 不接受 process substitution，改用等價的 pipe 寫法：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-可選環境變數：`TARGET_DIR`、`CLIENT`（`cursor` / `claude` / `codex` / `codex-native` / `skip`）。
+可選環境變數是 `TARGET_DIR` 與 `CLIENT`。`CLIENT` 可設為 `cursor` / `claude` / `codex` / `codex-native` / `skip`。
 
-或手動分步執行：
+想逐項看技師動手，或一鍵安裝不適用時，手動執行：
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
@@ -60,23 +59,31 @@ cd los-santos-customs
 # 若克隆時漏了 --recurse-submodules
 git submodule update --init --recursive
 
-# 安裝 git pre-commit hook（拒收私有樹、必要時跑可信集）
+# 裝 L1 安檢（拒收私有樹、必要時跑可信集）
 bash tools/harness/install-git-hooks.sh
 ```
 
-## 2. 安裝 Agent-Kit（AI 工具）
+完成後，你應該位於 `los-santos-customs/`，submodule 已初始化，git hooks 已安裝。一鍵路線還會替所選客戶端裝好 Agent-Kit 並跑公開可信集；手動路線請繼續 §2。手排車多一個步驟，這次不是情懷。
 
-Agent-Kit 為 Cursor / Claude Code / Codex 提供本工程的 skills 與 hooks。裸 install 會安裝 opinionated 最優預設：本地方法論、精選 SP 驗證／TDD／review skills、使用者主動呼叫的 Matt library，以及低頻 advisory router；不安裝 `using-superpowers`／`brainstorming` bootstrap 或 vendor hooks。
-客戶端目錄（`.cursor` / `.claude` / `.codex` / `.agents`）是**安裝產物，不進 git**——一律用 install 再生。
+## 2. 裝零件（Agent-Kit）
+
+Agent-Kit 把本廠的 skills 與 hooks 裝進編輯器／CLI。裸 install 會裝這套有主見的預設：
+
+- 本地方法論；
+- 精選 SP 驗證／TDD／review skills；
+- 由使用者主動呼叫的 Matt library；
+- 低頻 advisory router。
+
+它不安裝 `using-superpowers`／`brainstorming` bootstrap 或 vendor hooks。客戶端目錄（`.cursor` / `.claude` / `.codex` / `.agents`）是安裝產物，不進 git；壞了就重新 install，不必替生成檔做鈑金。
 
 ```bash
-# 安裝到指定客戶端
+# 裝到指定客戶端
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# 校驗設定是否完整
+# 校驗零件是否裝齊
 bash tools/harness/agent-kit.sh validate
 
-# 預覽安裝內容（dry-run）
+# 預覽（dry-run）
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
@@ -100,12 +107,11 @@ bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cu
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` 只保留作舊流程的顯式完整插件相容入口，不再是推薦安裝方式；預設 library materialization 不會複製 vendor plugin、hooks 或未列入 allowlist 的 skill。
+`PLUGIN` 只保留作舊流程的顯式完整插件相容入口，不再是推薦安裝方式。預設 library materialization 不會複製 vendor plugin、hooks 或未列入 allowlist 的 skill；零件架有清單，不靠地上那盒「可能用得到」。
 
-## 3. （可選）接入你自己的 subject
+## 3. （可選）把自己的車開進來
 
-公開 clone **不需要**任何私有業務倉即可跑綠可信集。  
-若要 sync / import / compare 真實 subject：
+公開 clone 不需要任何私有業務倉，也能把公開可信集跑綠。只有要 sync / import / compare 真實 subject 時，才把客戶的車接進本機工位：
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
@@ -115,11 +121,18 @@ bash tools/sync/sync-subjects.sh <id> --pin
 bash tools/harness/check-local-absorb.sh --all   # 本機 harness-ready（非公開套件）
 ```
 
-`subjects/manifest.yaml`、`pin.json`、`checkout/`、`snapshots/`、`comparisons/` 均為本機私有，已被 `.gitignore` 擋住。
+順序很重要：
+
+1. 從範本建立 `subjects/manifest.yaml`，把 remotes 改成你有權限存取的倉庫。
+2. 執行 sync，取得 subject 的 harness 表面。
+3. 用 `<id> --pin` 記錄要評估的確切版本。
+4. 跑本機 absorb 檢查；通過才是 `harness-ready`，之後才能可靠地 import、compare、score。
+
+`subjects/manifest.yaml`、`pin.json`、`checkout/`、`snapshots/`、`comparisons/` 都是客戶車輛與工單資料：只留本機，已被 `.gitignore` 擋住，不會停進公開展廳。這不是神祕，是基本的鑰匙管理。
 
 ---
 
-以下為日常參考，按需查閱。
+新車已會走了。以下是日常保養資料，按需查閱。
 
 ## 常用命令
 
