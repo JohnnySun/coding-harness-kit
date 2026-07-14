@@ -66,7 +66,7 @@ bash tools/harness/install-git-hooks.sh
 
 ## 2. 安装 Agent-Kit（AI 工具）
 
-Agent-Kit 为 Cursor / Claude Code / Codex 提供本工程的 skills 与 hooks。  
+Agent-Kit 为 Cursor / Claude Code / Codex 提供本工程的 skills 与 hooks。裸 install 默认包含精选 SP 核心、用户主动调用的 Matt library 与低频 advisory router；不安装全局 bootstrap 或 vendor hooks。
 客户端目录（`.cursor` / `.claude` / `.codex` / `.agents`）是**安装产物，不进 git**——一律用 install 再生。
 
 ```bash
@@ -83,7 +83,7 @@ CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 | 参数 | 可选值 |
 |------|--------|
 | `CLIENT` | `cursor`、`cursor-cli`、`claude`、`codex`、`codex-native` |
-| `PLUGIN`（可选） | `superpowers`、`mattpocock-skills`（空格分隔可多选） |
+| `--process-scaffold`（可选） | `lean`、`guided`、`structured`；只调整 advisory 密度 |
 
 ```bash
 # 四个客户端都装一遍（常见本机起步）
@@ -91,9 +91,12 @@ for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
 
-# 可选插件
-CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
+# 查看或调整 profile
+bash tools/harness/agent-kit.sh profile show
+bash tools/harness/agent-kit.sh profile set process_scaffold guided
 ```
+
+`PLUGIN` 仅保留为旧流程的显式完整插件兼容入口，不再是推荐安装方式。
 
 ## 3. （可选）接入你自己的 subject
 

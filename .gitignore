@@ -8,6 +8,8 @@ comparisons/
 # Runtime ledgers / reports (machine-written; may echo subject paths)
 docs/harness/gate-events.jsonl
 docs/harness/reports/
+.harness/agent-profile.local.yaml
+.harness/agent-profile-state.json
 
 # Scratch / one-off inspect trees
 _inspect/

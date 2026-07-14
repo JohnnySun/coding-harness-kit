@@ -49,7 +49,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
 ```
 
-可選環境變數：`TARGET_DIR`、`CLIENT`（`cursor` / `claude` / `codex` / `codex-native` / `skip`）、`PLUGIN`。
+可選環境變數：`TARGET_DIR`、`CLIENT`（`cursor` / `claude` / `codex` / `codex-native` / `skip`）。
 
 或手動分步執行：
 
@@ -66,7 +66,7 @@ bash tools/harness/install-git-hooks.sh
 
 ## 2. 安裝 Agent-Kit（AI 工具）
 
-Agent-Kit 為 Cursor / Claude Code / Codex 提供本工程的 skills 與 hooks。  
+Agent-Kit 為 Cursor / Claude Code / Codex 提供本工程的 skills 與 hooks。裸 install 會安裝 opinionated 最優預設：本地方法論、精選 SP 驗證／TDD／review skills、使用者主動呼叫的 Matt library，以及低頻 advisory router；不安裝 `using-superpowers`／`brainstorming` bootstrap 或 vendor hooks。
 客戶端目錄（`.cursor` / `.claude` / `.codex` / `.agents`）是**安裝產物，不進 git**——一律用 install 再生。
 
 ```bash
@@ -83,7 +83,7 @@ CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 | 參數 | 可選值 |
 |------|--------|
 | `CLIENT` | `cursor`、`cursor-cli`、`claude`、`codex`、`codex-native` |
-| `PLUGIN`（可選） | `superpowers`、`mattpocock-skills`（空格分隔可多選） |
+| `--process-scaffold`（可選） | `lean`、`guided`、`structured`；只調 advisory 密度 |
 
 ```bash
 # 四個客戶端都裝一遍（常見本機起步）
@@ -91,9 +91,16 @@ for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
 
-# 可選插件
-CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
+# 查看或調整 repo profile（Agent 一律經 CLI 寫入）
+bash tools/harness/agent-kit.sh profile show
+bash tools/harness/agent-kit.sh profile set process_scaffold guided
+
+# 輸出可攜 profile 到 subject；依 fragment 接線後檢查
+bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
+bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
+
+`PLUGIN` 只保留作舊流程的顯式完整插件相容入口，不再是推薦安裝方式；預設 library materialization 不會複製 vendor plugin、hooks 或未列入 allowlist 的 skill。
 
 ## 3. （可選）接入你自己的 subject
 

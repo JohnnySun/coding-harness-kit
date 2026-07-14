@@ -66,7 +66,7 @@ bash tools/harness/install-git-hooks.sh
 
 ## 2. Install Agent-Kit (AI tools)
 
-Agent-Kit provides skills and hooks for Cursor / Claude Code / Codex.  
+Agent-Kit provides skills and hooks for Cursor / Claude Code / Codex. A bare install includes the curated SP core, a user-invoked Matt library, and a low-frequency advisory router; it does not install global bootstrap skills or vendor hooks.
 Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) are **install outputs and are not committed** — always regenerate via install.
 
 ```bash
@@ -83,7 +83,7 @@ CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 | Parameter | Values |
 |-----------|--------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `PLUGIN` (optional) | `superpowers`, `mattpocock-skills` (space-separated) |
+| `--process-scaffold` (optional) | `lean`, `guided`, `structured`; adjusts advisory density only |
 
 ```bash
 # Install all four clients (common local bootstrap)
@@ -91,9 +91,12 @@ for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
 
-# Optional plugins
-CLIENT=cursor PLUGIN='superpowers mattpocock-skills' bash tools/harness/agent-kit.sh install
+# Inspect or adjust the profile
+bash tools/harness/agent-kit.sh profile show
+bash tools/harness/agent-kit.sh profile set process_scaffold guided
 ```
+
+`PLUGIN` remains only as an explicit full-plugin compatibility path for older workflows; it is no longer the recommended installation path.
 
 ## 3. (Optional) Wire your own subjects
 

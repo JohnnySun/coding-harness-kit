@@ -20,6 +20,13 @@ INSTALL_PY = AGENT_KIT / "install" / "install.py"
 PROFILE = "harness-dev"
 CLIENTS = ("cursor", "cursor-cli", "claude", "codex", "codex-native")
 OPTIONAL_PLUGINS = ("superpowers", "mattpocock-skills")
+CORE_SP_SKILLS = (
+    "test-driven-development",
+    "systematic-debugging",
+    "verification-before-completion",
+    "requesting-code-review",
+    "receiving-code-review",
+)
 LOCAL_SKILLS = [
     "code-review",
     "handoff",
@@ -94,6 +101,11 @@ class TestAgentKitInstallSurface(unittest.TestCase):
             AGENT_KIT / "external-skills-lock.json",
             AGENT_KIT / "optional-plugins.json",
             AGENT_KIT / "optional-plugins-lock.json",
+            AGENT_KIT / "profile" / "agent-profile.default.yaml",
+            AGENT_KIT / "profile" / "agent-profile.template.yaml",
+            AGENT_KIT / "profile" / "agent-profile.schema.json",
+            AGENT_KIT / "profile" / "agent-profile.mjs",
+            AGENT_KIT / "profile" / "agent-profile-router.mjs",
             AGENT_KIT / "install" / "constraints.json",
             AGENT_KIT / "install" / "pyproject.toml",
             AGENT_KIT / "hooks" / "hooks.json",
@@ -164,6 +176,15 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             " ".join(reviewer_prompt.split()),
         )
 
+    def test_builder_and_operate_require_profile_check_when_adopted(self) -> None:
+        skills_root = AGENT_KIT / "skills" / "skills"
+        for name in ("harness-builder", "harness-operate"):
+            with self.subTest(skill=name):
+                text = (skills_root / name / "SKILL.md").read_text(encoding="utf-8")
+                self.assertIn("agent-kit.sh profile check", text)
+                self.assertIn("已有語義等價", text)
+                self.assertIn("不覆寫既有 hooks", text)
+
     def test_installed_harness_operate_preserves_conditional_tdd_scope(self) -> None:
         """Shared source and installed clients expose the same scoped TDD contract."""
         source = AGENT_KIT / "skills" / "skills" / "harness-operate" / "SKILL.md"
@@ -220,6 +241,12 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                 self.assertEqual(plan["client"], client)
                 self.assertEqual(plan["optional_plugins"], [])
                 self.assertEqual(plan["external_skills"], [])
+                self.assertEqual(plan["profile"]["effective"]["process_scaffold"], "lean")
+                self.assertEqual(
+                    sorted(plan["libraries"]["superpowers"]),
+                    sorted(CORE_SP_SKILLS),
+                )
+                self.assertIn("grilling", plan["libraries"]["mattpocock-skills"])
                 for name in LOCAL_SKILLS:
                     rel = f"{skills_dir}/{name}"
                     self.assertIn(rel, plan["targets"])
@@ -232,7 +259,7 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                         f"{rel} → {os.path.realpath(link)} (expected {expected})",
                     )
 
-    def test_optional_plugins_opt_in_only(self) -> None:
+    def test_optimal_libraries_are_default_without_full_plugin_bootstrap(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
             proc = _run_install(
@@ -245,7 +272,105 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
                 output_root=out,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
-            self.assertEqual(json.loads(proc.stdout)["optional_plugins"], [])
+            plan = json.loads(proc.stdout)
+            self.assertEqual(plan["optional_plugins"], [])
+            for skill in CORE_SP_SKILLS:
+                self.assertIn(f".cursor/skills/{skill}", plan["targets"])
+            self.assertIn(".cursor/skills/grilling", plan["targets"])
+            self.assertNotIn(".cursor/skills/using-superpowers", plan["targets"])
+            self.assertNotIn(".cursor/skills/brainstorming", plan["targets"])
+            self.assertFalse(
+                any(target.startswith(".cursor/plugins/superpowers") for target in plan["targets"])
+            )
+            self.assertFalse(
+                any(target.startswith(".cursor/plugins/mattpocock-skills") for target in plan["targets"])
+            )
+
+    def test_unowned_legacy_plugin_requires_manual_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            legacy = out / ".cursor" / "plugins" / "superpowers"
+            legacy.mkdir(parents=True)
+            (legacy / "plugin.json").write_text('{"name":"custom"}\n', encoding="utf-8")
+            proc = _run_install(
+                "install", "--client", "cursor", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stdout)
+            self.assertIn("manual_cleanup_required", proc.stderr)
+            self.assertTrue(legacy.is_dir())
+
+    def test_owned_legacy_plugin_is_planned_for_safe_migration(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            legacy = out / ".cursor" / "plugins" / "superpowers"
+            legacy.mkdir(parents=True)
+            (legacy / "plugin.json").write_text('{"name":"superpowers"}\n', encoding="utf-8")
+            state = out / ".harness" / "agent-profile-state.json"
+            state.parent.mkdir(parents=True)
+            state.write_text(
+                json.dumps({
+                    "schema_version": 1,
+                    "clients": {
+                        "cursor": {
+                            "managed_plugin_roots": [".cursor/plugins/superpowers"],
+                        },
+                    },
+                }),
+                encoding="utf-8",
+            )
+            proc = _run_install(
+                "install", "--client", "cursor", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            plan = json.loads(proc.stdout)
+            self.assertIn(
+                ".cursor/plugins/superpowers",
+                plan["removed_managed_plugins"],
+            )
+            self.assertTrue(legacy.is_dir(), "dry-run must not mutate legacy output")
+
+    def test_generated_client_tree_can_migrate_known_legacy_plugin(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / ".gitignore").write_text(".cursor/\n", encoding="utf-8")
+            legacy = out / ".cursor" / "plugins" / "superpowers"
+            legacy.mkdir(parents=True)
+            (legacy / "plugin.json").write_text('{"name":"superpowers"}\n', encoding="utf-8")
+            bootstrap = out / ".cursor" / "skills" / "using-superpowers"
+            bootstrap.mkdir(parents=True)
+            (bootstrap / "SKILL.md").write_text("# legacy bootstrap\n", encoding="utf-8")
+            proc = _run_install(
+                "install", "--client", "cursor", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            plan = json.loads(proc.stdout)
+            self.assertIn(".cursor/plugins/superpowers", plan["removed_managed_plugins"])
+            self.assertIn(
+                "using-superpowers",
+                plan["removed_legacy_bootstrap_skills"],
+            )
+            self.assertTrue(legacy.is_dir(), "dry-run must not mutate legacy output")
+            self.assertTrue(bootstrap.is_dir(), "dry-run must not mutate bootstrap skill")
+
+    def test_default_library_refuses_to_overwrite_unmanaged_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            skill = out / ".cursor" / "skills" / "grilling"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text("# user content\n", encoding="utf-8")
+            proc = _run_install(
+                "install", "--client", "cursor", "--profile", PROFILE, "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stdout)
+            self.assertIn("unmanaged skill", proc.stderr)
+            self.assertEqual(
+                (skill / "SKILL.md").read_text(encoding="utf-8"),
+                "# user content\n",
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
@@ -499,6 +624,52 @@ class TestAgentKitWrapper(unittest.TestCase):
             capture_output=True,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+
+    def test_wrapper_profile_show_and_set_local(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            show = subprocess.run(
+                [
+                    "bash", str(ROOT / "tools" / "harness" / "agent-kit.sh"),
+                    "profile", "show", "--root", str(root), "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(show.returncode, 0, show.stderr + show.stdout)
+            self.assertEqual(json.loads(show.stdout)["effective"]["process_scaffold"], "lean")
+            set_local = subprocess.run(
+                [
+                    "bash", str(ROOT / "tools" / "harness" / "agent-kit.sh"),
+                    "profile", "set", "reply_style", "concise",
+                    "--root", str(root), "--local",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(set_local.returncode, 0, set_local.stderr + set_local.stdout)
+            self.assertIn(
+                "reply_style: concise",
+                (root / ".harness" / "agent-profile.local.yaml").read_text(encoding="utf-8"),
+            )
+
+    def test_install_process_scaffold_delegates_to_profile_writer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            proc = _run_install(
+                "install", "--client", "cursor", "--profile", PROFILE,
+                "--process-scaffold", "guided", "--dry-run",
+                output_root=out,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
+            report = json.loads(proc.stdout)
+            self.assertEqual(report["profile"]["effective"]["process_scaffold"], "guided")
+            self.assertIn(
+                "process_scaffold: guided",
+                (out / ".harness" / "agent-profile.yaml").read_text(encoding="utf-8"),
+            )
 
     def test_wrapper_install_no_dry_run_flag(self) -> None:
         """set -u must not trip on empty DRY/PLUGIN arrays (real install path)."""

@@ -1,0 +1,5 @@
+schema_version: 1
+process_scaffold: lean
+matt_skills: enabled
+sp_library: enabled
+reply_style: default

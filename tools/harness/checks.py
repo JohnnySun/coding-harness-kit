@@ -534,6 +534,45 @@ def check_hook_wiring() -> None:
             fail(cid, f"installed {path.relative_to(ROOT)} missing {marker}")
 
 
+def check_agent_profile_surface() -> None:
+    cid = "agent-profile-surface"
+    required = [
+        ROOT / ".harness" / "agent-profile.yaml",
+        ROOT / "agent-kit" / "profile" / "agent-profile.default.yaml",
+        ROOT / "agent-kit" / "profile" / "agent-profile.template.yaml",
+        ROOT / "agent-kit" / "profile" / "agent-profile.schema.json",
+        ROOT / "agent-kit" / "profile" / "agent-profile.mjs",
+        ROOT / "agent-kit" / "profile" / "agent-profile-router.mjs",
+    ]
+    missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
+    if missing:
+        fail(cid, f"missing profile SSOT: {missing}")
+        return
+    router = (ROOT / "agent-kit" / "profile" / "agent-profile-router.mjs").read_text(
+        encoding="utf-8"
+    )
+    for poison in ("Before responding", "must follow", "1% chance"):
+        if poison.lower() in router.lower():
+            fail(cid, f"advisory router contains bootstrap poison: {poison}")
+            return
+    enforcement = (ROOT / "tools" / "harness" / "hook-router.mjs").read_text(
+        encoding="utf-8"
+    )
+    for profile_token in ("process_scaffold", "agent-profile"):
+        if profile_token in enforcement:
+            fail(cid, f"enforcement hook must remain profile-invariant: {profile_token}")
+            return
+    optional = json.loads(
+        (ROOT / "agent-kit" / "optional-plugins.json").read_text(encoding="utf-8")
+    )
+    sp_skills = optional["plugins"]["superpowers"]["skills"]
+    for bootstrap in ("using-superpowers", "brainstorming", "writing-plans"):
+        if bootstrap in sp_skills:
+            fail(cid, f"default SP allowlist contains bootstrap skill {bootstrap}")
+            return
+    ok(cid, "three control planes remain separated")
+
+
 def check_public_subject_gates() -> None:
     """Run protocol checker on public example subjects that have green fixtures."""
     cid = "subject-gates-fixture"
@@ -643,6 +682,7 @@ def main() -> int:
     check_ledger_registry()
     check_docs_placement()
     check_hook_wiring()
+    check_agent_profile_surface()
     check_public_subject_gates()
 
     print("")

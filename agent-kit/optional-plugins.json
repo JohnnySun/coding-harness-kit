@@ -2,12 +2,19 @@
   "schema_version": 1,
   "plugins": {
     "superpowers": {
-      "description": "Optional full upstream Superpowers plugin package for users who explicitly opt in.",
+      "description": "Pinned upstream skill library. The default materializer copies only the core allowlist and never installs vendor hooks or bootstrap skills.",
       "source": "https://github.com/obra/superpowers.git",
       "sourceType": "github",
       "path": ".",
       "version": "main",
-      "skills": "*",
+      "skill_root": "skills",
+      "skills": [
+        "test-driven-development",
+        "systematic-debugging",
+        "verification-before-completion",
+        "requesting-code-review",
+        "receiving-code-review"
+      ],
       "clients": {
         "cursor-cli": {
           "plugins_dir": ".cursor/plugins",
@@ -72,6 +79,7 @@
       "sourceType": "github",
       "path": ".",
       "version": "main",
+      "skill_root": "skills",
       "skills": [
         "ask-matt",
         "codebase-design",
@@ -84,12 +92,14 @@
         "improve-codebase-architecture",
         "prototype",
         "research",
+        "resolving-merge-conflicts",
         "setup-matt-pocock-skills",
         "tdd",
         "teach",
-        "to-issues",
-        "to-prd",
+        "to-spec",
+        "to-tickets",
         "triage",
+        "wayfinder",
         "writing-great-skills"
       ],
       "clients": {

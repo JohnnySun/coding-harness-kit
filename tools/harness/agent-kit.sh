@@ -15,6 +15,9 @@ case "$CMD" in
       uv run --project agent-kit/install python agent-kit/install/install.py \
       install --client "$CLIENT" --dry-run "$@"
     ;;
+  profile)
+    exec node agent-kit/profile/agent-profile.mjs "$@"
+    ;;
   install)
     CLIENT="${CLIENT:?set CLIENT=cursor|cursor-cli|claude|codex|codex-native}"
     args=(install --client "$CLIENT")
@@ -31,11 +34,12 @@ case "$CMD" in
       "${args[@]}" "$@"
     ;;
   *)
-    echo "usage: $0 {validate|render|install}" >&2
+    echo "usage: $0 {validate|render|install|profile}" >&2
     echo "  CLIENT=cursor|cursor-cli|claude|codex|codex-native" >&2
     echo "  PLUGIN='name1 name2'  # optional plugins (install only)" >&2
     echo "  DRY_RUN=1             # install dry-run" >&2
     echo "  OUTPUT_ROOT=<dir>     # render/install output root" >&2
+    echo "  profile show|get|set|check|export" >&2
     exit 2
     ;;
 esac

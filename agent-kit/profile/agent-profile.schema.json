@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "process_scaffold",
+    "matt_skills",
+    "sp_library",
+    "reply_style"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "process_scaffold": {
+      "enum": ["lean", "guided", "structured"]
+    },
+    "matt_skills": {
+      "enum": ["enabled", "disabled"]
+    },
+    "sp_library": {
+      "enum": ["enabled", "disabled"]
+    },
+    "reply_style": {
+      "enum": ["default", "concise", "detailed"]
+    }
+  }
+}

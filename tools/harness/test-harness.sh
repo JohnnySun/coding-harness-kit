@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
-node --test tools/harness/hook-router.test.mjs tools/harness/prompt-skill-router.test.mjs tools/harness/advisor-card.test.mjs
+node --test tools/harness/hook-router.test.mjs tools/harness/prompt-skill-router.test.mjs tools/harness/agent-profile.test.mjs tools/harness/advisor-card.test.mjs
 python3 -m unittest discover -s tools/harness -p 'test_agent_kit_install.py' -v
 python3 -m unittest discover -s tools/harness -p 'test_subject_gates.py' -v
 python3 -m unittest discover -s tools/harness -p 'test_public_tree_desensitize.py' -v

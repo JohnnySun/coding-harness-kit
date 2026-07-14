@@ -15,7 +15,13 @@ from unittest import TestCase, main as unittest_main
 
 # Add install dir to path so `import install` resolves.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from install import resolve_plugin_skills, install_resolved_skills  # noqa: E402
+from install import (  # noqa: E402
+    ensure_user_invoked_metadata,
+    install_resolved_skills,
+    remove_stale_managed_skills,
+    resolve_plugin_skills,
+    set_skill_description,
+)
 
 
 def _write_skill(root: Path, rel: str, body: str = "# skill\n") -> Path:
@@ -149,13 +155,17 @@ class TestResolvePluginSkills(TestCase):
             resolve_plugin_skills(self._plugin("*"), self.plugin_root)
         self.assertIn("no skills resolved", str(ctx.exception))
 
-    def test_explicit_list_without_manifest_raises(self) -> None:
-        """Explicit skills list with no plugin.json array is unsupported."""
-        # No manifest at all → declared_skills is None → list branch unsupported.
-        _write_skill(self.plugin_root, "skills/tdd")
-        with self.assertRaises(ValueError) as ctx:
-            resolve_plugin_skills(self._plugin(["tdd"]), self.plugin_root)
-        self.assertIn("requires a plugin.json", str(ctx.exception))
+    def test_explicit_list_without_manifest_uses_declared_skill_root(self) -> None:
+        """An explicit skill_root resolves allowlisted skills without plugin hooks."""
+        _write_skill(self.plugin_root, "skills/engineering/tdd")
+        plugin = {
+            "name": "test-plugin",
+            "skills": ["tdd"],
+            "skill_root": "skills",
+        }
+        pairs = resolve_plugin_skills(plugin, self.plugin_root)
+        self.assertEqual([name for name, _ in pairs], ["tdd"])
+        self.assertIn("engineering", pairs[0][1].as_posix())
 
     def test_path_escape_raises(self) -> None:
         """A declared path escaping plugin_root raises (defense-in-depth)."""
@@ -216,6 +226,53 @@ class TestInstallResolvedSkillsCollision(TestCase):
                 "test-plugin", resolved, self.output_root, ".claude/skills", set()
             )
         self.assertIn("collides with an already-installed skill", str(ctx.exception))
+
+
+class TestUserInvokedMetadata(TestCase):
+    def test_matt_skill_frontmatter_is_marked_user_invoked(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = Path(tmp)
+            skill_md = skill / "SKILL.md"
+            skill_md.write_text("---\nname: grilling\ndescription: Stress-test a plan.\n---\n\nBody.\n")
+            ensure_user_invoked_metadata(skill)
+            text = skill_md.read_text()
+            self.assertIn("disable-model-invocation: true", text)
+            self.assertEqual(text.count("disable-model-invocation:"), 1)
+
+    def test_core_skill_description_can_encode_must_not_boundaries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            skill = Path(tmp)
+            skill_md = skill / "SKILL.md"
+            skill_md.write_text(
+                "---\nname: tdd\ndescription: Use for everything.\n---\n\nBody.\n"
+            )
+            set_skill_description(
+                skill,
+                "Use for maintained behavior; skip pure docs and research.",
+            )
+            text = skill_md.read_text()
+            self.assertIn(
+                "description: Use for maintained behavior; skip pure docs and research.",
+                text,
+            )
+            self.assertNotIn("Use for everything", text)
+
+
+class TestManagedStateCleanup(TestCase):
+    def test_rejects_skill_name_path_traversal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            victim = root / "victim"
+            victim.mkdir()
+            (victim / "keep").write_text("safe\n")
+            with self.assertRaises(ValueError):
+                remove_stale_managed_skills(
+                    root,
+                    ".cursor/skills",
+                    ["../../../victim"],
+                    set(),
+                )
+            self.assertTrue((victim / "keep").is_file())
 
 
 if __name__ == "__main__":

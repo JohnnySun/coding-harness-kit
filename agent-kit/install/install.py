@@ -32,8 +32,31 @@ EXTERNAL_SKILLS_PATH = AGENT_KIT / "external-skills.json"
 EXTERNAL_SKILLS_LOCK_PATH = AGENT_KIT / "external-skills-lock.json"
 OPTIONAL_PLUGINS_PATH = AGENT_KIT / "optional-plugins.json"
 OPTIONAL_PLUGINS_LOCK_PATH = AGENT_KIT / "optional-plugins-lock.json"
+AGENT_PROFILE_CLI = AGENT_KIT / "profile" / "agent-profile.mjs"
 DEFAULT_PROFILE = "harness-dev"
 CLIENT_CHOICES = ("cursor", "cursor-cli", "claude", "codex", "codex-native")
+CORE_SKILL_DESCRIPTIONS = {
+    "test-driven-development": (
+        "Use when maintained reproducible behavior can be specified by a failing automated test; "
+        "skip pure docs, research, configuration-only edits, and throwaway probes."
+    ),
+    "systematic-debugging": (
+        "Use for failing tests, regressions, crashes, or unexpected behavior that need root-cause "
+        "diagnosis; skip when the cause and requested fix are already known."
+    ),
+    "verification-before-completion": (
+        "Use immediately before claiming fixed, complete, or passing, or before commit and PR, to "
+        "collect fresh command evidence; skip ordinary progress updates."
+    ),
+    "requesting-code-review": (
+        "Use after substantial implementation when an explicit adversarial review is needed before "
+        "merge; skip routine self-checks and non-code answers."
+    ),
+    "receiving-code-review": (
+        "Use when concrete review feedback has been received and must be verified before changes; "
+        "skip when no reviewer feedback is present."
+    ),
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -54,6 +77,46 @@ def write_text(path: Path, text: str) -> None:
     if not text.endswith("\n"):
         text += "\n"
     path.write_text(text, encoding="utf-8")
+
+
+def run_agent_profile(*args: str) -> dict[str, Any]:
+    proc = subprocess.run(
+        ["node", str(AGENT_PROFILE_CLI), *args],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        raise ValueError(proc.stderr.strip() or proc.stdout.strip() or "agent profile command failed")
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"agent profile returned invalid JSON: {exc}") from exc
+
+
+def prepare_agent_profile(
+    output_root: Path,
+    client: str,
+    *,
+    write_outputs: bool,
+    process_scaffold: str | None,
+) -> tuple[dict[str, Any], str | None]:
+    root_args = ["--root", str(output_root)]
+    if process_scaffold is not None:
+        run_agent_profile("set", "process_scaffold", process_scaffold, *root_args)
+    runtime_hash: str | None = None
+    if write_outputs and output_root.resolve() == ROOT.resolve():
+        runtime_hash = sha256_files(
+            [
+                AGENT_KIT / "profile" / "agent-profile.mjs",
+                AGENT_KIT / "profile" / "agent-profile-router.mjs",
+            ]
+        )
+    elif write_outputs:
+        exported = run_agent_profile("export", *root_args, "--client", client)
+        runtime_hash = str(exported["runtime_hash"])
+    profile = run_agent_profile("show", *root_args, "--json")
+    return profile, runtime_hash
 
 
 def parse_frontmatter(path: Path) -> dict[str, str]:
@@ -177,6 +240,13 @@ def sha256_file(path: Path) -> str:
     with path.open("rb") as fh:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def sha256_files(paths: list[Path]) -> str:
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(path.read_bytes())
     return digest.hexdigest()
 
 
@@ -417,6 +487,51 @@ def copy_skill_tree(src: Path, dst: Path) -> None:
     shutil.copytree(src, dst)
 
 
+def ensure_user_invoked_metadata(skill_dir: Path) -> None:
+    """Mark a materialized skill as user-invoked without changing its body."""
+    skill_md = skill_dir / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        raise ValueError(f"{skill_dir.name}: SKILL.md is missing YAML frontmatter")
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        raise ValueError(f"{skill_dir.name}: SKILL.md has unterminated YAML frontmatter")
+    frontmatter = text[4:end]
+    if re.search(r"^disable-model-invocation\s*:", frontmatter, re.MULTILINE):
+        frontmatter = re.sub(
+            r"^disable-model-invocation\s*:.*$",
+            "disable-model-invocation: true",
+            frontmatter,
+            count=1,
+            flags=re.MULTILINE,
+        )
+    else:
+        frontmatter = f"{frontmatter.rstrip()}\ndisable-model-invocation: true"
+    skill_md.write_text(f"---\n{frontmatter}\n---\n{text[end + 5:]}", encoding="utf-8")
+
+
+def set_skill_description(skill_dir: Path, description: str) -> None:
+    """Replace the discovery description while preserving the maintained skill body."""
+    skill_md = skill_dir / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        raise ValueError(f"{skill_dir.name}: SKILL.md is missing YAML frontmatter")
+    end = text.find("\n---\n", 4)
+    if end < 0:
+        raise ValueError(f"{skill_dir.name}: SKILL.md has unterminated YAML frontmatter")
+    frontmatter = text[4:end]
+    if not re.search(r"^description\s*:", frontmatter, re.MULTILINE):
+        raise ValueError(f"{skill_dir.name}: SKILL.md frontmatter is missing description")
+    frontmatter = re.sub(
+        r"^description\s*:.*$",
+        f"description: {description}",
+        frontmatter,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    skill_md.write_text(f"---\n{frontmatter}\n---\n{text[end + 5:]}", encoding="utf-8")
+
+
 def install_external_skill(skill: dict[str, Any], dst: Path) -> None:
     source_type = str(skill.get("sourceType", ""))
     if source_type not in {"github", "git"}:
@@ -515,9 +630,25 @@ def resolve_plugin_skills(
             if (p / "SKILL.md").exists()
         ]
     elif requested_names:
-        raise ValueError(
-            f"{name}: explicit 'skills' list requires a plugin.json 'skills' array to resolve nested paths"
-        )
+        skill_root = plugin.get("skill_root")
+        if not skill_root:
+            raise ValueError(
+                f"{name}: explicit 'skills' list requires a plugin.json 'skills' array "
+                "or an explicit skill_root"
+            )
+        root = (plugin_root / str(skill_root)).resolve()
+        if not root.is_relative_to(plugin_root.resolve()) or not root.is_dir():
+            raise ValueError(f"{name}: invalid skill_root {skill_root!r}")
+        candidates: dict[str, list[Path]] = {}
+        for skill_md in root.rglob("SKILL.md"):
+            candidates.setdefault(skill_md.parent.name, []).append(skill_md.parent)
+        for skill_name in requested_names:
+            matches = candidates.get(skill_name, [])
+            if not matches:
+                raise ValueError(f"{name}: missing allowlisted skill {skill_name!r} under {skill_root}")
+            if len(matches) > 1:
+                raise ValueError(f"{name}: ambiguous allowlisted skill {skill_name!r} under {skill_root}")
+            chosen.append((skill_name, str(matches[0].relative_to(plugin_root.resolve()))))
 
     if not chosen:
         raise ValueError(f"{name}: no skills resolved (empty declaration or empty list)")
@@ -610,11 +741,103 @@ def install_optional_plugin(
         )
 
 
+def install_skill_library(
+    library: dict[str, Any],
+    output_root: Path,
+    skills_dir: str,
+    occupied_skill_names: set[str],
+) -> list[str]:
+    """Install only an allowlisted skill library; never copy plugin hooks/assets."""
+    source_type = str(library.get("sourceType", ""))
+    if source_type not in {"github", "git"}:
+        raise ValueError(f"{library.get('name')}: unsupported library sourceType {source_type!r}")
+    with tempfile.TemporaryDirectory(prefix=f"agent-kit-library-{library['name']}-") as tmp_name:
+        repo_dir = Path(tmp_name) / "repo"
+        subprocess.run(["git", "clone", "--quiet", str(library["source"]), str(repo_dir)], check=True)
+        subprocess.run(
+            ["git", "-c", "advice.detachedHead=false", "checkout", "--quiet", str(library["ref"])],
+            cwd=repo_dir,
+            check=True,
+        )
+        library_root = repo_dir / str(library["path"])
+        if not library_root.is_dir():
+            raise ValueError(f"{library['name']}: missing library source path {library['path']}")
+        resolved = resolve_plugin_skills(library, library_root)
+        install_resolved_skills(
+            str(library["name"]),
+            resolved,
+            output_root,
+            skills_dir,
+            occupied_skill_names,
+        )
+        if library["name"] == "mattpocock-skills":
+            for skill_name, _ in resolved:
+                ensure_user_invoked_metadata(output_root / skills_dir / skill_name)
+        if library["name"] == "superpowers":
+            for skill_name, _ in resolved:
+                set_skill_description(
+                    output_root / skills_dir / skill_name,
+                    CORE_SKILL_DESCRIPTIONS[skill_name],
+                )
+        return [name for name, _ in resolved]
+
+
+def load_managed_state(output_root: Path) -> dict[str, Any]:
+    state_path = output_root / ".harness" / "agent-profile-state.json"
+    if not state_path.exists():
+        return {"schema_version": 1, "clients": {}}
+    try:
+        state = load_json(state_path)
+    except (json.JSONDecodeError, OSError) as exc:
+        raise ValueError(f"managed profile state is invalid: {exc}") from exc
+    if state.get("schema_version") != 1 or not isinstance(state.get("clients"), dict):
+        raise ValueError("managed profile state has an unsupported schema")
+    return state
+
+
+def remove_stale_managed_skills(
+    output_root: Path,
+    skills_dir: str,
+    previous: list[str],
+    desired: set[str],
+) -> list[str]:
+    removed: list[str] = []
+    for name in previous:
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name):
+            raise ValueError(f"managed profile state contains invalid skill name {name!r}")
+        if name in desired:
+            continue
+        target = output_root / skills_dir / name
+        if target.is_symlink() or target.is_file():
+            target.unlink()
+        elif target.is_dir():
+            shutil.rmtree(target)
+        else:
+            continue
+        removed.append(name)
+    return removed
+
+
+def client_tree_is_declared_generated(output_root: Path, skills_dir: str) -> bool:
+    """Treat a whole ignored client tree as installer-owned legacy output."""
+    gitignore = output_root / ".gitignore"
+    if not gitignore.is_file():
+        return False
+    client_root = skills_dir.split("/", 1)[0]
+    rules = {
+        line.strip()
+        for line in gitignore.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    return f"{client_root}/" in rules or client_root in rules
+
+
 def install(
     client: str,
     profile: str,
     dry_run: bool,
     optional_plugin_names: list[str] | None = None,
+    process_scaffold: str | None = None,
 ) -> dict[str, Any]:
     report = validate(profile)
     if report["errors"]:
@@ -625,12 +848,26 @@ def install(
     if client not in clients:
         raise ValueError(f"unsupported client: {client}")
     client_cfg = clients[client]
-    skills = report["skills"]
-    external_skills = locked_external_skills(profile)
-    optional_plugins = locked_optional_plugins(optional_plugin_names or [])
-    commands = report["commands"]
     output_root = Path(os.environ.get("OUTPUT_ROOT", str(ROOT)))
     write_outputs = not dry_run or output_root != ROOT
+    agent_profile, runtime_hash = prepare_agent_profile(
+        output_root,
+        client,
+        write_outputs=write_outputs,
+        process_scaffold=process_scaffold,
+    )
+    effective_profile = agent_profile["effective"]
+    skills = report["skills"]
+    external_skills = locked_external_skills(profile)
+    explicit_optional_names = optional_plugin_names or []
+    optional_plugins = locked_optional_plugins(explicit_optional_names)
+    default_library_names: list[str] = []
+    if effective_profile["sp_library"] == "enabled" and "superpowers" not in explicit_optional_names:
+        default_library_names.append("superpowers")
+    if effective_profile["matt_skills"] == "enabled" and "mattpocock-skills" not in explicit_optional_names:
+        default_library_names.append("mattpocock-skills")
+    libraries = locked_optional_plugins(default_library_names)
+    commands = report["commands"]
     skills_root = local_skills_root()
     # Relative links are for in-repo installs; OUTPUT_ROOT temp trees may sit on
     # a different mount (macOS /var/folders vs workspace), so use absolute there.
@@ -638,6 +875,49 @@ def install(
 
     targets: list[str] = []
     skills_dir = client_cfg["skills_dir"]
+    generated_client_tree = client_tree_is_declared_generated(output_root, skills_dir)
+    state = load_managed_state(output_root)
+    previous_client_state = state.get("clients", {}).get(client, {})
+    previously_managed_plugin_roots = set(previous_client_state.get("managed_plugin_roots", []))
+    removed_managed_plugins: list[str] = []
+    removed_legacy_bootstrap_skills: list[str] = []
+    manual_cleanup_required: list[str] = []
+    declarations = optional_plugin_declarations()
+    for library_name in default_library_names:
+        library_client = declarations[library_name].get("clients", {}).get(client, {})
+        plugins_dir = library_client.get("plugins_dir")
+        if not plugins_dir:
+            continue
+        rel = f"{plugins_dir}/{library_name}"
+        legacy_root = output_root / rel
+        if not (legacy_root.exists() or legacy_root.is_symlink()):
+            continue
+        if rel not in previously_managed_plugin_roots and not generated_client_tree:
+            manual_cleanup_required.append(rel)
+            continue
+        if not dry_run:
+            if legacy_root.is_symlink() or legacy_root.is_file():
+                legacy_root.unlink()
+            else:
+                shutil.rmtree(legacy_root)
+        removed_managed_plugins.append(rel)
+    if removed_managed_plugins:
+        for name in ("using-superpowers", "brainstorming", "writing-plans"):
+            target = output_root / skills_dir / name
+            if not (target.exists() or target.is_symlink()):
+                continue
+            if not dry_run:
+                if target.is_symlink() or target.is_file():
+                    target.unlink()
+                else:
+                    shutil.rmtree(target)
+            removed_legacy_bootstrap_skills.append(name)
+    if manual_cleanup_required:
+        raise ValueError(
+            "manual_cleanup_required: refusing to remove unowned legacy plugin paths: "
+            + ", ".join(manual_cleanup_required)
+        )
+
     occupied_skill_names: set[str] = set()
     for skill in skills:
         occupied_skill_names.add(skill)
@@ -652,6 +932,55 @@ def install(
         targets.append(rel)
         if write_outputs and not dry_run:
             install_external_skill(skill, output_root / rel)
+
+    library_skill_names: dict[str, list[str]] = {}
+    desired_library_skills: set[str] = set()
+    planned_library_skills: set[str] = set()
+    for library in libraries:
+        declared = library.get("skills")
+        if not isinstance(declared, list) or not declared:
+            raise ValueError(f"{library['name']}: default library requires a non-empty skills allowlist")
+        names = [str(name) for name in declared]
+        library_skill_names[str(library["name"])] = names
+        desired_library_skills.update(names)
+        for name in names:
+            if name in occupied_skill_names or name in planned_library_skills:
+                raise ValueError(f"{library['name']}: library skill {name!r} collides with installed skills")
+            planned_library_skills.add(name)
+            targets.append(f"{skills_dir}/{name}")
+
+    removed_managed_skills: list[str] = []
+    previously_managed_library_skills = set(
+        previous_client_state.get("managed_library_skills", [])
+    )
+    for name in desired_library_skills:
+        target = output_root / skills_dir / name
+        if (
+            (target.exists() or target.is_symlink())
+            and name not in previously_managed_library_skills
+            and not (generated_client_tree and removed_managed_plugins)
+        ):
+            raise ValueError(
+                f"manual_cleanup_required: refusing to overwrite unmanaged skill {target}"
+            )
+    if write_outputs and not dry_run:
+        removed_managed_skills = remove_stale_managed_skills(
+            output_root,
+            skills_dir,
+            list(previous_client_state.get("managed_library_skills", [])),
+            desired_library_skills,
+        )
+        for library in libraries:
+            installed_names = install_skill_library(
+                library,
+                output_root,
+                skills_dir,
+                occupied_skill_names,
+            )
+            if installed_names != library_skill_names[library["name"]]:
+                raise ValueError(
+                    f"{library['name']}: resolved skill order/content differs from configured allowlist"
+                )
 
     optional_plugin_target_map = {
         plugin["name"]: optional_plugin_targets(plugin, client, client_cfg["skills_dir"])
@@ -680,6 +1009,27 @@ def install(
         client, client_cfg, output_root, targets, write_outputs=write_outputs
     )
 
+    if write_outputs and not dry_run:
+        state["runtime_hash"] = runtime_hash
+        state.setdefault("clients", {})[client] = {
+            "managed_skills": list(skills),
+            "managed_library_skills": sorted(desired_library_skills),
+            "library_skills": library_skill_names,
+            "libraries": {
+                "superpowers": effective_profile["sp_library"],
+                "matt": effective_profile["matt_skills"],
+            },
+            "library_refs": {
+                library["name"]: library["ref"]
+                for library in libraries
+            },
+            "managed_plugin_roots": [
+                f"{plugin['clients'][client]['plugins_dir']}/{plugin['name']}"
+                for plugin in optional_plugins
+            ],
+        }
+        write_json(output_root / ".harness" / "agent-profile-state.json", state)
+
     return {
         "client": client,
         "profile": profile,
@@ -688,6 +1038,12 @@ def install(
         "targets": targets,
         "external_skills": [skill["name"] for skill in external_skills],
         "optional_plugins": [plugin["name"] for plugin in optional_plugins],
+        "profile": agent_profile,
+        "libraries": library_skill_names,
+        "removed_managed_skills": removed_managed_skills,
+        "removed_managed_plugins": removed_managed_plugins,
+        "removed_legacy_bootstrap_skills": removed_legacy_bootstrap_skills,
+        "manual_cleanup_required": manual_cleanup_required,
         "warnings": report["warnings"],
     }
 
@@ -701,6 +1057,11 @@ def main(argv: list[str] | None = None) -> int:
     install_parser.add_argument("--client", required=True, choices=list(CLIENT_CHOICES))
     install_parser.add_argument("--profile", default=DEFAULT_PROFILE)
     install_parser.add_argument("--dry-run", action="store_true")
+    install_parser.add_argument(
+        "--process-scaffold",
+        choices=["lean", "guided", "structured"],
+        help="persist the profile advisory-density setting before install",
+    )
     install_parser.add_argument("--with-optional-plugin", action="append", default=[])
     install_parser.add_argument(
         "--with-all-optional-plugins",
@@ -721,7 +1082,13 @@ def main(argv: list[str] | None = None) -> int:
                     if args.client in (decl.get("clients") or {})
                 ]
                 optional_names = sorted(set(optional_names) | set(supported))
-            payload = install(args.client, args.profile, args.dry_run, optional_names)
+            payload = install(
+                args.client,
+                args.profile,
+                args.dry_run,
+                optional_names,
+                args.process_scaffold,
+            )
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 2
