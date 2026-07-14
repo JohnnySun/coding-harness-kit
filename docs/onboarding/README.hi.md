@@ -38,13 +38,13 @@
 One-line install (clone + submodules + hooks + Agent-Kit + trusted suite):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
 Or:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
 Optional: `TARGET_DIR`, `CLIENT`, `PLUGIN`.
@@ -52,8 +52,8 @@ Optional: `TARGET_DIR`, `CLIENT`, `PLUGIN`.
 Manual steps:
 
 ```bash
-git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
-cd coding-harness-kit
+git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
+cd los-santos-customs
 git submodule update --init --recursive
 bash tools/harness/install-git-hooks.sh
 ```

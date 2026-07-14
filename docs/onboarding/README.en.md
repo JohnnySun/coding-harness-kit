@@ -40,13 +40,13 @@
 One-line install (clone + submodules + git hooks + Agent-Kit + public trusted suite):
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
 Equivalent:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
 Optional env vars: `TARGET_DIR`, `CLIENT` (`cursor` / `claude` / `codex` / `codex-native` / `skip`), `PLUGIN`.
@@ -54,8 +54,8 @@ Optional env vars: `TARGET_DIR`, `CLIENT` (`cursor` / `claude` / `codex` / `code
 Or manually step by step:
 
 ```bash
-git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
-cd coding-harness-kit
+git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
+cd los-santos-customs
 
 # If you forgot --recurse-submodules
 git submodule update --init --recursive

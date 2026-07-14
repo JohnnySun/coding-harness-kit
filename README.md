@@ -40,13 +40,13 @@
 一鍵安裝（克隆 + submodule + git hooks + Agent-Kit + 公開可信集）：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
 等價寫法：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
 可選環境變數：`TARGET_DIR`、`CLIENT`（`cursor` / `claude` / `codex` / `codex-native` / `skip`）。
@@ -54,8 +54,8 @@ curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/s
 或手動分步執行：
 
 ```bash
-git clone --recurse-submodules https://github.com/JohnnySun/coding-harness-kit.git
-cd coding-harness-kit
+git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
+cd los-santos-customs
 
 # 若克隆時漏了 --recurse-submodules
 git submodule update --init --recursive

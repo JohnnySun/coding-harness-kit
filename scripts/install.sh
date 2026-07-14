@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 # Los Santos Customs (LSC) one-line installer (public GitHub / HTTPS).
-# Repo slug remains coding-harness-kit until remote rename.
+# Public GitHub slug: los-santos-customs.
 #
 # Usage:
-#   bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
-#   curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh | bash
+#   bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
+#   curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 #
 # Optional:
 #   TARGET_DIR=my-kit CLIENT=cursor PLUGIN='superpowers mattpocock-skills' \
-#     bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
+#     bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 #
 # What it does:
-#   1. Clone coding-harness-kit with submodules
+#   1. Clone los-santos-customs with submodules
 #   2. Install L1 git hooks
 #   3. Install Agent-Kit for your editor/CLI (prompt or CLIENT=)
 #   4. Run the public trusted suite
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/JohnnySun/coding-harness-kit.git}"
+REPO_URL="${REPO_URL:-https://github.com/JohnnySun/los-santos-customs.git}"
 REPO_REF="${REPO_REF:-main}"
-DEFAULT_DIR="coding-harness-kit"
+DEFAULT_DIR="los-santos-customs"
 
 info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m ✓\033[0m  %s\n' "$*"; }
