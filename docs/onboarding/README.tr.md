@@ -23,153 +23,165 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **Bu dükkân sizin arabanızla, yani coding harness ile çalışır.** Bu, bir ürün reposunun çevresindeki AI geliştirme koruma katmanıdır. Ürün reposu — subject — arabanın sahibidir; iş kaynak kodu motordur ve motoru kapalı tutarız.
-> Kısa rota: tek satırlık kurulumu çalıştırın → Cursor, Claude Code veya Codex için Agent-Kit'i kurun → isteğe bağlı olarak gerçek bir subject bağlayın, ardından sync ve pin yapıp `harness-ready` durumunu denetleyin. Yeni parçalar yine dinamometreye çıkar. Boya kontrolü bir test planı değildir.
+> **Tek satırda:** Burası reponuzun *koruma bariyerleri* için bir modifiye dükkânı. Lifte çıkan iş kodunuz değil, etrafını saran **coding harness**: AI'ın (Cursor, Claude Code, Codex) köşeleri kesmesini, “bitti” numarası yapmasını veya commit edilmemesi gereken şeyleri git'e tıkmasını önleyen katman.
+>
+> **Size ne kazandırır:** Ayarlanmış metodoloji skills ve hata kaldırmayan hooks paketimizi olduğu gibi kullanabilir ya da aynı bariyerleri kendi repolarınıza takabilirsiniz. Motora (iş kaynak kodunuza) dokunmuyoruz; yalnızca dış kafesi AI'ın kolayca buruşturamayacağı kadar sağlam kaynaklıyoruz.
+>
+> **Yola çıkmak için üç vites:** tek satırda kurulum → (kontak) Agent-Kit'i rafa kaldır → (isteğe bağlı) kendi subject'inizi içeri sürün. Dükkânı kapatmadan önce `bash tools/harness/test-harness.sh` komutuna basın; gösterge paneli yemyeşilse muayene tamam, araç trafiğe hazır.
 
-| Terim | Anlamı (dükkân eşlemesi) |
-|------|---------|
-| **coding harness** | Arabanız: ürün reposunun çevresindeki AI geliştirme koruma katmanı (rules, skills, hooks, trusted suite ve ledgers) |
-| **subject** | Arabanın sahibi olan ürün reposu (yerel clone; burada commit edilmez) |
-| **harness surface** | Parça bölmesi: `AGENTS.md`, skills, hooks ve benzeri koruma dosyaları; iş kaynak kodu değildir |
-| **Agent-Kit** | Parça rafı: metodoloji skills ve hook templates öğelerini Cursor, Claude Code, Codex vb. içine yerleştirir |
-| **public trusted suite** | Dinamometre: `bash tools/harness/test-harness.sh` (L2 CI ile aynı) |
+## Sözlük (dükkân jargonu)
 
-## 1. Kabul (başlatma)
+Aşağıda bu kelimeleri sık göreceksiniz. Burada bir kez öğrenin; belgenin geri kalanı doğrudan kullanır.
 
-Dükkâna girmenin en hızlı yolu tek satırlık kurucudur. Repoyu clone eder, submodules bileşenlerini başlatır, git hooks ve Agent-Kit'i kurar, ardından public trusted suite'i çalıştırır:
+| Jargon | Sade karşılığı |
+|--------|----------------|
+| **coding harness** | Gerçekte anahtar tuttuğumuz “araba”: ürün reposunun çevresindeki rules, skills, hooks, trusted suite ve ledgers dâhil tüm AI geliştirme koruma katmanı |
+| **subject** | Absorb / compare için servis gözüne alınan ürün reposu; yalnızca yerelde clone edilir, burada **asla** commit edilmez |
+| **harness surface** | Arabanın modifiye panelleri (`AGENTS.md`, skills, hooks); motor (iş kaynak kodu) değil |
+| **Agent-Kit** | Raf kurucusu: methodology skills / hook templates öğelerini Cursor, Claude Code, Codex vb. içine yerleştirir |
+| **public trusted suite** | `bash tools/harness/test-harness.sh`: bu dükkândan bir şey çıkmadan önce yapılan dyno testi (L2 CI ile aynı tezgâh) |
+
+## En hızlı şerit: tek satırda kabul
+
+Tek komut tüm işi yapar: dükkânı clone eder, submodules öğelerini çeker, git hooks kurar, Agent-Kit'i rafa yerleştirir ve doğruca dyno'ya (public trusted suite) çıkarır.
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-Shell'iniz process substitution desteklemiyorsa eşdeğer pipe biçimini kullanın:
+Fazla mı süslü? Eski usul pipe aynı motoru çalıştırır:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-İsteğe bağlı ortam değişkenleri `TARGET_DIR` ve `CLIENT`'tır. `CLIENT` değerini `cursor` / `claude` / `codex` / `codex-native` / `skip` olarak ayarlayın.
+Nereye kurulacağını ve hangi istemcinin bağlanacağını seçmek için iki ortam değişkenini ayarlayın:
 
-Elle uygulanan yedek yol veya her adımı izlemek için:
+- `TARGET_DIR` — kurulumun yapılacağı directory
+- `CLIENT` — bağlanacak client: `cursor` / `claude` / `codex` / `codex-native`; Agent-Kit'i sonraya bırakmak için `skip`
+
+Tek satırlık kurulum Agent-Kit'i de rafa kaldırır ve suite'i çalıştırır; **çoğu kişi motoru burada kapatıp paydos edebilir**. Parçaları tek tek takmak mı istiyorsunuz, yoksa kurulum yarı yolda stop mu etti? Aşağıdaki manuel şeride geçin.
+
+## Manuel kabul (kendiniz monte edin)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# If you forgot --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Install L1 safety check (blocks private trees; runs suite when needed)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-Artık başlatılmış submodules ve kurulmuş git hooks ile `los-santos-customs/` içinde olmalısınız. Tek satırlık rota, seçtiğiniz istemci için Agent-Kit'i de kurar ve public suite'i çalıştırır. Elle kurulum yaptıysanız §2'ye geçin. Manuel şanzımanın bir ek adımı vardır; bunun nedeni nostalji değildir.
+Bu noktada yalnızca servis kapısı açıldı; parça sandığı (Agent-Kit) hâlâ yerde duruyor. Devam edin.
 
-## 2. Parçaları takma (Agent-Kit)
+## Agent-Kit'i rafa alın (parça sandığını duvara kaldırın)
 
-Agent-Kit, bu dükkânın skills ve hooks öğelerini editörünüze veya CLI aracınıza kurar. Seçeneksiz kurulum şu bilinçli varsayılanları sağlar:
+Agent-Kit, bu reponun methodology skills ve hooks öğelerini editörünüze / CLI aracınıza yerleştirir. Seçeneksiz kurulum ayarlanmış bir varsayılan set sunar: yerel metodoloji, seçilmiş SP verification / TDD / review skills, bilinçli çağıracağınız Matt library ve düşük sıklıklı bir advisory router.
 
-- yerel metodoloji;
-- seçilmiş SP doğrulama, TDD ve review skills;
-- kullanıcı tarafından çağrılan bir Matt library;
-- düşük sıklıkta çalışan tavsiye router.
-
-`using-superpowers` / `brainstorming` bootstrap bileşenini veya tedarikçi hooks öğelerini kurmaz. İstemci ağaçları (`.cursor` / `.claude` / `.codex` / `.agents`) kurulum çıktılarıdır ve commit edilmez. Bunları install ile yeniden üretin; oluşturulan dosyaların kaporta işlemine ihtiyacı yoktur.
+`using-superpowers` / `brainstorming` bootstrap bileşenini gizlice kurmaz ve vendor hooks öğelerine dokunmaz; bunlar yalnızca açıkça seçilir. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) **kurulum çıktısıdır ve asla commit edilmez**: elle değiştirip git'e kaçırmak yerine her zaman install ile yeniden üretin.
 
 ```bash
-# Install for a specific client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Validate the parts are seated
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Preview install (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Parametre | Değerler |
-|-----------|--------|
+|-----------|----------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (isteğe bağlı) | `lean`, `guided`, `structured`; yalnızca tavsiye yoğunluğunu ayarlar |
+| `--process-scaffold` (isteğe bağlı) | `lean`, `guided`, `structured`; yalnızca advisory prompt yoğunluğu—enforcement'a **asla** dokunmaz |
+
+En yaygın yerel bootstrap, dört istemciyi birden rafa kaldırır:
 
 ```bash
-# Install all four clients (common local bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Inspect or adjust the repo profile (agents write via CLI only)
+Repo profile her zaman CLI üzerinden yönetilir (YAML'ı elle değiştirmek sorun davetiyesidir). Kurulumu başka bir repoya taşımak için önce export edin, sonra check edin:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Export a portable profile into a subject; wire fragments, then check
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN`, eski workflows için yalnızca tam plugin uyumluluğuna yönelik açık bir yol olarak kalır. Artık önerilen kurulum yolu değildir. Varsayılan library materialization, allowlist dışındaki tedarikçi plugins, hooks veya skills öğelerini kopyalamaz; parça rafının bir envanteri olmasının nedeni vardır.
+`PLUGIN`, eski workflows için yalnızca açık bir full-plugin uyumluluk çıkışı olarak kalır; artık önerilen yol değildir. Varsayılan library materialization, vendor plugins, hooks veya allowlist dışındaki hiçbir skill öğesini kopyalamaz.
 
-## 3. (İsteğe bağlı) Kendi arabanızı getirin
+## Kendi arabanızı içeri sürün (isteğe bağlı: subject bağlayın)
 
-Herkese açık bir clone, özel ürün repoları olmadan public trusted suite'i çalıştırabilir. Yerel dükkânınıza yalnızca gerçek bir subject üzerinde sync, import veya compare yapmanız gerektiğinde müşteri arabası bağlayın:
+Dükkânın tamamen yeşil çalıştığını görmek mi istiyorsunuz? **Hiçbir şey bağlamayın**: public clone, sıfır özel ürün reposuyla trusted suite'i yine baştan sona yeşil çalıştırır.
+
+Yalnızca gerçek bir subject için sync / import / compare yapmak istediğinizde şu satırları çalıştırın:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edit remotes to repos you can access, then:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-Sıralama önemlidir:
+Tek bir sırayı ezberleyin: **`manifest.yaml` oluştur → sync → sürümü geri yazmak için `--pin` → `harness-ready` olana kadar `check-local-absorb.sh`**. Önce bu gate'i geçin; import / compare / score ancak ondan sonra çalışabilir.
 
-1. Örneği kullanarak `subjects/manifest.yaml` oluşturun. Remotes değerlerini erişebildiğiniz repolara yönlendirin.
-2. Her subject'in harness surface alanını almak için sync çalıştırın.
-3. Değerlendirmek istediğiniz kesin revision'ı kaydetmek için `<id> --pin` kullanın.
-4. Yerel absorb denetimini çalıştırın. Denetimden geçen subject `harness-ready` olur; ancak bundan sonra import, compare ve score güvenilir sonuçlar üretebilir.
+Aşağıdakiler yerelde kalır ve zaten gitignore kapsamındadır. Commit'e zorla sokmaya uğraşmayın; pre-commit hook daha kapıda geri çevirir:
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/` ve `comparisons/` müşteri arabaları ve iş emirleridir. Yerel kalır, git tarafından yok sayılır ve herkese açık teşhir salonuna asla girmezler. Bu gizlilik değil, temel anahtar denetimidir.
+- `subjects/manifest.yaml`
+- her subject'in `pin.json` ve `checkout/` öğeleri
+- `snapshots/`, `comparisons/`
 
 ---
 
-Araba artık kendi gücüyle hareket ediyor. Geri kalanı servis bölmesi referansıdır.
+Aşağısı günlük referans duvarıdır. Gerektiğinde bir alet alın; hepsini tek oturuşta okumanız gerekmez.
 
-## Sık kullanılan komutlar
+## Sık kullanılan komutlar (alet duvarı)
 
-| Amaç | Komut |
-|---------|---------|
-| Public trusted suite (döngüyü kapatma / CI) | `bash tools/harness/test-harness.sh` |
+| İstediğiniz işlem | Çalıştırılacak satır |
+|-------------------|----------------------|
+| Public trusted suite (dyno / CI biçimli) | `bash tools/harness/test-harness.sh` |
 | Agent-Kit'i doğrulama | `bash tools/harness/agent-kit.sh validate` |
 | Harness surface için sync | `bash tools/sync/sync-subjects.sh` |
 | Pin'i yeniden yazma | `bash tools/sync/sync-subjects.sh <id> --pin` |
-| Yerel absorb hazırlığı | `bash tools/harness/check-local-absorb.sh --all` |
+| Local absorb hazırlığı | `bash tools/harness/check-local-absorb.sh --all` |
 | Snapshot import | `python3 tools/import/import_subject.py --all` |
-| Compare raporu | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
+| Compare report | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
 | Score | `python3 tools/score/score_subject.py <id>` |
 | Haftalık rapor | `python3 tools/harness/weekly_report.py` |
 
-## Yerleşim
+## Dükkân planı (her parça nerede)
 
-| Yol | Rol | Git'te mi? |
-|------|------|---------|
+| Yol | Nedir | Git'te mi? |
+|-----|-------|------------|
 | `agent-kit/skills` | Açık metodoloji (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | İstemci hooks/settings templates | ✓ |
+| `agent-kit/hooks/clients/` | İstemci başına hooks / settings templates | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Kurulum çıktıları | ✗ |
-| `subjects/manifest.example.yaml` | Herkese açık registry örneği | ✓ |
+| `subjects/manifest.example.yaml` | Public registry örneği | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Yerel registry / clone | ✗ |
 | `tools/` | sync / import / compare / score / suite / hooks | ✓ |
-| `testdata/` | Herkese açık fixtures (CI) | ✓ |
+| `testdata/` | Public fixtures (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Absorb ürünleri | ✗ |
 | `docs/harness/` | Design + ledgers | kısmen |
-| `AGENTS.md` | Kısıtlar için SSOT (`CLAUDE.md` → bu dosya) | ✓ |
+| `AGENTS.md` | Kısıtların SSOT'u (`CLAUDE.md` burayı gösterir) | ✓ |
 
-## Belgeler
+## El kitabı rafı (daha derine inin)
 
-- [`docs/README.md`](../README.md) — belge yerleştirme kuralları
+- [`docs/README.md`](../README.md) — belge yerleşim kuralları
 - [`docs/harness/design.md`](../harness/design.md) — bu reponun harness design belgesi
 - [`docs/specs/`](../specs/) — design arşivi
 - [`AGENTS.md`](../../AGENTS.md) — tamamlanma tanımı, blacklist ve mekanizma haritası
 
 ## Lisans
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — ruhsat burada; aracı dükkândan istediğiniz gibi çıkarın.

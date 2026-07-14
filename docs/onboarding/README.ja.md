@@ -23,153 +23,165 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **このショップが整備する車は、あなたの coding harness です。** つまり、プロダクトリポジトリの外側を囲む AI 開発用のガードレール層です。車の持ち主はそのプロダクトリポジトリ、すなわち subject。業務ソースはエンジンなので、ボンネットは開けません。
-> 最短ルート：1 行の受付コマンドを実行 → Cursor、Claude Code、または Codex 用の Agent-Kit をインストール → 必要なら実際の subject を接続し、sync、pin、`harness-ready` の確認へ進みます。新しい部品は public trusted suite というダイノに載せます。塗装の点検はテスト計画ではありません。
+> **ひと言で言うと：** ここは repo の *guardrails* を改造するショップです。リフトに載せるのは業務ソースではなく、その外側を包む **coding harness**。AI（Cursor、Claude Code、Codex）が近道をしたり、根拠なしに「完了」と言ったり、commit してはいけないものを git に押し込んだりするのを防ぐ層です。
+>
+> **何がうれしいのか：** 調整済みの methodology skills とうっかりに強い hooks をそのまま使うことも、同じ guardrails を自分の repos に取り付けることもできます。エンジン（業務ソース）には触れません。AI が気軽に潰せないところまで、外側のロールケージを溶接するだけです。
+>
+> **走り出すまでの 3 速：** 1 行で install →（点火）Agent-Kit をラックへ →（任意）自分の subject を入庫。店じまいの前に `bash tools/harness/test-harness.sh` を実行してください。メーターが全部緑なら検査合格、公道走行 OK です。
 
-| 用語 | 意味（ショップでの対応） |
-|------|---------|
-| **coding harness** | あなたの車：プロダクトリポジトリを囲む AI 開発用ガードレール層（rules、skills、hooks、trusted suite、ledgers） |
-| **subject** | 車を所有するプロダクトリポジトリ（ローカル clone。本リポジトリにはコミットしない） |
-| **harness surface** | 部品作業区画：`AGENTS.md`、skills、hooks などのガードレールファイル。業務ソースではない |
-| **Agent-Kit** | 部品棚：方法論の skills / hook テンプレートを Cursor、Claude Code、Codex などへ展開する |
-| **public trusted suite** | ダイノ：`bash tools/harness/test-harness.sh`（L2 CI と同じ） |
+## 用語集（ショップの隠語）
 
-## 1. 受付（初期化）
+以下の言葉は何度も登場します。ここで一度だけ覚えれば、残りはそのまま読めます。
 
-最速で作業区画に入る方法は、1 行のインストーラです。リポジトリを clone し、submodules を初期化し、git hooks と Agent-Kit をインストールしてから、public trusted suite を実行します。
+| 隠語 | 普通の言い方 |
+|------|--------------|
+| **coding harness** | 実際に整備する「車」—product repo の外側にある AI-dev guardrail layer 全体：rules、skills、hooks、trusted suite、ledgers |
+| **subject** | absorb / compare のため作業ベイに入れる product repo。clone はローカルだけで、ここには **決して** commit しない |
+| **harness surface** | 車の改造パネル（`AGENTS.md`、skills、hooks）。エンジン（業務ソース）ではない |
+| **Agent-Kit** | ラック用 installer。methodology skills / hook templates を Cursor、Claude Code、Codex などへ配置する |
+| **public trusted suite** | `bash tools/harness/test-harness.sh`—何かを出荷する前のダイノ走行（L2 CI と同じ設備） |
+
+## 最速レーン：1 行で受付
+
+1 つの command ですべて行います。ショップを clone し、submodules を取得し、git hooks を install し、Agent-Kit をラックに載せ、そのままダイノ（public trusted suite）へ送ります。
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-シェルが process substitution に対応していない場合は、同等の pipe 形式を使います。
+少し派手すぎますか？ 昔ながらの pipe でも同じエンジンがかかります。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-任意の環境変数は `TARGET_DIR` と `CLIENT` です。`CLIENT` には `cursor` / `claude` / `codex` / `codex-native` / `skip` を指定します。
+配置先と配線する client を選ぶなら、次の 2 つの env vars を設定します。
 
-手動での代替手順、またはレンチの一回転ずつを確認したい場合：
+- `TARGET_DIR` — install 先の directory
+- `CLIENT` — 配線する client：`cursor` / `claude` / `codex` / `codex-native`。Agent-Kit を後回しにするなら `skip`
+
+One-liner は Agent-Kit の配置と suite の実行まで済ませます。**ほとんどの人はここでエンジンを切って退勤できます**。1 速ずつ自分で組みたい、または one-liner が途中で止まった場合は、以下の manual lane へどうぞ。
+
+## Manual intake（自分で取り付ける）
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# If you forgot --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Install L1 safety check (blocks private trees; runs suite when needed)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-これで、submodules が初期化され、git hooks がインストールされた `los-santos-customs/` 内にいるはずです。1 行ルートでは、選択した client 用の Agent-Kit もインストールし、public trusted suite も実行します。手動ルートを選んだ場合は §2 へ進んでください。マニュアル車には手順が 1 つ多くありますが、懐古趣味ではありません。
+ここではまだ作業ベイの扉を開けただけです。部品箱（Agent-Kit）は床に置かれたまま。先へ進みましょう。
 
-## 2. 部品を取り付ける（Agent-Kit）
+## Agent-Kit をラックへ（部品箱を壁に上げる）
 
-Agent-Kit は、このショップの skills と hooks をエディタまたは CLI にインストールします。引数なしの install には、次の方針付きデフォルトが含まれます。
+Agent-Kit は、この repo の methodology skills と hooks を editor / CLI に配置します。素の install で入るのは、調整済みの default set です。local methodology、選定済みの SP verification / TDD / review skills、必要なときに呼ぶ Matt library、それに低頻度の advisory router が含まれます。
 
-- ローカルの方法論
-- 選定済みの SP verification、TDD、review skills
-- ユーザーが呼び出す Matt library
-- 低頻度の advisory router
-
-`using-superpowers` / `brainstorming` bootstrap や vendor hooks はインストールしません。client trees（`.cursor` / `.claude` / `.codex` / `.agents`）はインストール出力であり、コミットしません。install で再生成してください。生成ファイルに板金作業は不要です。
+`using-superpowers` / `brainstorming` bootstrap を勝手に入れることはなく、vendor hooks にも触れません。これらは opt-in 専用です。client trees（`.cursor` / `.claude` / `.codex` / `.agents`）は **install outputs であり、決して commit しません**。手で直して git に紛れ込ませず、必ず install から再生成してください。
 
 ```bash
-# Install for a specific client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Validate the parts are seated
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Preview install (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
-| パラメータ | 値 |
-|-----------|-----|
+| Parameter | 値 |
+|-----------|----|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold`（任意） | `lean`, `guided`, `structured`。advisory の密度だけを調整 |
+| `--process-scaffold`（任意） | `lean`, `guided`, `structured`。advisory prompt の密度だけを変え、enforcement には **決して** 触れない |
+
+最も一般的な local bootstrap—4 つの clients をまとめてラックへ載せます。
 
 ```bash
-# Install all four clients (common local bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Inspect or adjust the repo profile (agents write via CLI only)
+Repo profile は必ず CLI 経由で変更します（YAML の手編集はトラブルの予約席です）。別の repo へ setup を運ぶときは、先に export してから check します。
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Export a portable profile into a subject; wire fragments, then check
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` は、古い workflow 向けの明示的な full-plugin 互換ルートとしてのみ残っています。推奨インストール方法ではありません。デフォルトの library 展開では、allowlist 外の vendor plugins、hooks、skills はコピーしません。部品棚に在庫表があるのには理由があります。
+`PLUGIN` は古い workflows 向けの明示的な full-plugin compatibility hatch としてだけ残っています。現在の recommended path ではありません。Default library materialization は vendor plugins、hooks、allowlist 外の skills をコピーしません。
 
-## 3. （任意）自分の車を持ち込む
+## 自分の車を入庫（任意：subject を接続）
 
-public clone は、private なプロダクトリポジトリなしで public trusted suite を実行できます。実際の subject を sync、import、compare する必要がある場合だけ、顧客の車をローカル作業区画へ接続します。
+ショップが全部緑で動くことだけ確認したいですか？ **何も接続しなくて構いません**。public clone は private な product repos に一切依存せず、それでも trusted suite をすべて緑で実行できます。
+
+実際の subject を sync / import / compare したいときだけ、次を実行します。
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edit remotes to repos you can access, then:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-順序が重要です。
+覚える順序は 1 つだけです。**`manifest.yaml` を作成 → sync → `--pin` で version を書き戻す → `harness-ready` になるまで `check-local-absorb.sh`**。まずこの gate を通過してください。import / compare / score を実行できるのはその後です。
 
-1. example から `subjects/manifest.yaml` を作成し、アクセスできる repos を remotes に指定します。
-2. sync を実行し、各 subject の harness surface を取得します。
-3. `<id> --pin` で、評価する正確な revision を記録します。
-4. local absorb check を実行します。合格した subject が `harness-ready` です。それから初めて、import、compare、score が信頼できる結果を出せます。
+以下はローカルに残り、すでに gitignore されています。commit に無理やり入れようとしても、pre-commit hook がその場で跳ね返します。
 
-`subjects/manifest.yaml`、`pin.json`、`checkout/`、`snapshots/`、`comparisons/` は顧客の車と作業指示書です。ローカルに残り、gitignore され、public showroom には入りません。秘密主義ではなく、鍵の基本管理です。
+- `subjects/manifest.yaml`
+- 各 subject の `pin.json` と `checkout/`
+- `snapshots/`、`comparisons/`
 
 ---
 
-これで車は自力で走ります。以下はサービスベイのリファレンスです。
+以下は日常用のリファレンスウォールです。必要な tool だけ手に取ればよく、一度に全部読む必要はありません。
 
-## よく使うコマンド
+## よく使う commands（工具の壁）
 
-| 目的 | コマンド |
-|------|----------|
-| public trusted suite（loop を閉じる / CI） | `bash tools/harness/test-harness.sh` |
-| Agent-Kit の検証 | `bash tools/harness/agent-kit.sh validate` |
-| harness surface の sync | `bash tools/sync/sync-subjects.sh` |
-| pin の書き換え | `bash tools/sync/sync-subjects.sh <id> --pin` |
-| local absorb readiness | `bash tools/harness/check-local-absorb.sh --all` |
-| snapshot の import | `python3 tools/import/import_subject.py --all` |
-| compare report | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
-| score | `python3 tools/score/score_subject.py <id>` |
-| weekly report | `python3 tools/harness/weekly_report.py` |
+| やりたいこと | 実行する行 |
+|--------------|------------|
+| Public trusted suite（ダイノ / CI 形状） | `bash tools/harness/test-harness.sh` |
+| Agent-Kit の validate | `bash tools/harness/agent-kit.sh validate` |
+| Harness surface の sync | `bash tools/sync/sync-subjects.sh` |
+| Pin の書き換え | `bash tools/sync/sync-subjects.sh <id> --pin` |
+| Local absorb readiness | `bash tools/harness/check-local-absorb.sh --all` |
+| Snapshot の import | `python3 tools/import/import_subject.py --all` |
+| Compare report | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
+| Score | `python3 tools/score/score_subject.py <id>` |
+| Weekly report | `python3 tools/harness/weekly_report.py` |
 
-## レイアウト
+## フロアマップ（各部品の置き場）
 
-| パス | 役割 | git? |
-|------|------|------|
-| `agent-kit/skills` | オープンな方法論（submodule → JohnnySun/skills） | ✓ |
-| `agent-kit/hooks/clients/` | client hooks/settings templates | ✓ |
-| `.cursor` / `.agents` / `.claude` / `.codex` | install outputs | ✗ |
-| `subjects/manifest.example.yaml` | public registry example | ✓ |
-| `subjects/manifest.yaml` + `<id>/{pin,checkout}` | local registry / clone | ✗ |
+| Path | 内容 | Git に入る？ |
+|------|------|--------------|
+| `agent-kit/skills` | Open methodology（submodule → JohnnySun/skills） | ✓ |
+| `agent-kit/hooks/clients/` | client ごとの hooks / settings templates | ✓ |
+| `.cursor` / `.agents` / `.claude` / `.codex` | Install outputs | ✗ |
+| `subjects/manifest.example.yaml` | Public registry example | ✓ |
+| `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Local registry / clone | ✗ |
 | `tools/` | sync / import / compare / score / suite / hooks | ✓ |
-| `testdata/` | public fixtures（CI） | ✓ |
-| `snapshots/` / `comparisons/` | absorb products | ✗ |
-| `docs/harness/` | design + ledgers | 一部 |
-| `AGENTS.md` | 制約の SSOT（`CLAUDE.md` → it） | ✓ |
+| `testdata/` | Public fixtures（CI） | ✓ |
+| `snapshots/` / `comparisons/` | Absorb products | ✗ |
+| `docs/harness/` | Design + ledgers | 一部 |
+| `AGENTS.md` | Constraint SSOT（`CLAUDE.md` はここを参照） | ✓ |
 
-## ドキュメント
+## マニュアル棚（さらに深く）
 
-- [`docs/README.md`](../README.md) — ドキュメント配置ルール
-- [`docs/harness/design.md`](../harness/design.md) — このリポジトリの harness design
+- [`docs/README.md`](../README.md) — ドキュメントの配置ルール
+- [`docs/harness/design.md`](../harness/design.md) — この repo の harness design
 - [`docs/specs/`](../specs/) — design archive
-- [`AGENTS.md`](../../AGENTS.md) — 完了条件、blacklist、mechanism map
+- [`AGENTS.md`](../../AGENTS.md) — completion definition、blacklist、mechanism map
 
 ## ライセンス
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — 好きなように乗って帰れます。車検証はこちら。

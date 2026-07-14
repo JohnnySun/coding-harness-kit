@@ -23,137 +23,149 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **Bengkel ini menangani mobil Anda: coding harness.** Ini adalah lapisan pagar pengaman pengembangan AI yang mengelilingi sebuah repo produk. Repo produk tersebut—subject—memiliki mobilnya; source bisnis adalah mesinnya, dan mesin itu kami biarkan tertutup.
-> Rute singkat: jalankan intake satu baris → instal Agent-Kit untuk Cursor, Claude Code, atau Codex → bila perlu, hubungkan subject nyata, lalu lakukan sync, pin, dan periksa `harness-ready`. Part baru tetap harus diuji di dyno. Inspeksi cat bukanlah rencana pengujian.
+> **Singkatnya:** Ini bengkel modifikasi untuk *guardrails* repo Anda. Yang naik lift bukan source bisnis, melainkan **coding harness** yang membungkusnya: lapisan yang mencegah AI (Cursor, Claude Code, Codex) mengambil jalan pintas, mengaku “selesai” tanpa bukti, atau menyelundupkan hal yang tak boleh di-commit ke git.
+>
+> **Untungnya buat Anda:** Pakai langsung methodology skills yang sudah disetel dan hooks yang tahan salah pencet, atau pasang guardrails yang sama ke repo Anda sendiri. Kami tidak menyentuh mesin (source bisnis Anda)—kami hanya mengelas roll cage luarnya sampai AI tak bisa meremukkannya dengan santai.
+>
+> **Tiga gigi untuk mulai jalan:** instalasi satu baris → (kontak menyala) pasang Agent-Kit di rak → (opsional) masukkan subject Anda. Sebelum tutup bengkel, jalankan `bash tools/harness/test-harness.sh`—dashboard serbahijau berarti lolos inspeksi dan laik jalan.
 
-| Istilah | Arti (pemetaan bengkel) |
-|------|---------|
-| **coding harness** | Mobil Anda: lapisan pagar pengaman AI-dev di sekitar repo produk (rules, skills, hooks, trusted suite, ledgers) |
-| **subject** | Repo produk pemilik mobil (clone lokal; tidak di-commit di sini) |
-| **harness surface** | Ruang part: `AGENTS.md`, skills, hooks, dan file pagar pengaman serupa; bukan source bisnis |
-| **Agent-Kit** | Rak part: mewujudkan methodology skills / hook templates ke Cursor, Claude Code, Codex, dan lainnya |
-| **public trusted suite** | Dyno: `bash tools/harness/test-harness.sh` (sama dengan L2 CI) |
+## Glosarium (bahasa bengkel)
 
-## 1. Intake (inisialisasi)
+Istilah berikut akan sering muncul. Pelajari sekali di sini; bagian lain langsung memakainya.
 
-Jalur tercepat ke ruang servis adalah installer satu baris. Installer ini meng-clone repo, menginisialisasi submodules, menginstal git hooks dan Agent-Kit, lalu menjalankan public trusted suite:
+| Bahasa bengkel | Arti biasa |
+|----------------|------------|
+| **coding harness** | “Mobil” yang benar-benar kami oprek—seluruh lapisan guardrail AI-dev di sekitar repo produk: rules, skills, hooks, trusted suite, ledgers |
+| **subject** | Repo produk yang dibawa ke ruang servis untuk di-absorb / compare; hanya di-clone lokal, **tidak pernah** di-commit di sini |
+| **harness surface** | Panel modifikasi mobil itu (`AGENTS.md`, skills, hooks)—bukan mesin (source bisnis) |
+| **Agent-Kit** | Installer rak part—memasang methodology skills / hook templates ke Cursor, Claude Code, Codex, dan lainnya |
+| **public trusted suite** | `bash tools/harness/test-harness.sh`—uji dyno sebelum apa pun keluar dari bengkel (rig yang sama dengan L2 CI) |
+
+## Jalur tercepat: intake satu baris
+
+Satu command mengerjakan semuanya: meng-clone bengkel, menarik submodules, menginstal git hooks, memasang Agent-Kit, lalu langsung membawanya ke dyno (public trusted suite).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-Jika shell Anda tidak mendukung process substitution, gunakan bentuk pipe yang setara:
+Terlalu canggih? Pipe gaya lama memutar mesin yang sama:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-Environment variable opsional adalah `TARGET_DIR` dan `CLIENT`. Atur `CLIENT` ke `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+Mau menentukan lokasi pendaratan dan client yang dipasangi kabel? Atur dua env vars ini:
 
-Untuk fallback manual, atau untuk melihat setiap langkah pengerjaan:
+- `TARGET_DIR` — directory tujuan instalasi
+- `CLIENT` — client yang dipasangi kabel: `cursor` / `claude` / `codex` / `codex-native`, atau `skip` untuk memasang Agent-Kit nanti
+
+One-liner juga memasang Agent-Kit dan menjalankan suite—**kebanyakan orang bisa mematikan mesin dan pulang dari sini**. Ingin memasang satu gigi demi satu, atau one-liner mogok di tengah jalan? Masuk jalur manual berikut.
+
+## Intake manual (pasang sendiri)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# If you forgot --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Install L1 safety check (blocks private trees; runs suite when needed)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-Sekarang Anda seharusnya berada di dalam `los-santos-customs/`, dengan submodules yang sudah diinisialisasi dan git hooks yang sudah terinstal. Rute satu baris juga menginstal Agent-Kit untuk client pilihan Anda dan menjalankan public suite. Jika Anda mengambil rute manual, lanjutkan ke §2. Transmisi manual memang memiliki satu langkah tambahan; ini bukan soal nostalgia.
+Sampai sini pintu ruang servis baru terbuka—peti part (Agent-Kit) masih tergeletak di lantai. Lanjutkan.
 
-## 2. Pasang part (Agent-Kit)
+## Pasang Agent-Kit di rak (peti part ke dinding)
 
-Agent-Kit menginstal skills dan hooks bengkel ini ke editor atau CLI Anda. Instalasi dasar menyediakan default pilihan berikut:
+Agent-Kit memasukkan methodology skills dan hooks repo ini ke editor / CLI Anda. Instalasi polos memberi set default yang sudah disetel: methodology lokal, pilihan terkurasi SP verification / TDD / review skills, Matt library yang Anda panggil saat perlu, plus advisory router berfrekuensi rendah.
 
-- methodology lokal;
-- SP skills terkurasi untuk verification, TDD, dan review;
-- Matt library yang dipanggil oleh pengguna;
-- advisory router berfrekuensi rendah.
-
-Agent-Kit tidak menginstal bootstrap `using-superpowers` / `brainstorming` maupun vendor hooks. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) adalah output instalasi dan tidak di-commit. Buat ulang dengan install; file hasil generate tidak memerlukan bodywork.
+Agent-Kit **tidak** diam-diam memasang bootstrap `using-superpowers` / `brainstorming`, dan vendor hooks dibiarkan apa adanya—semuanya hanya opt-in. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) adalah **output instalasi dan tidak pernah di-commit**: selalu buat ulang lewat install, jangan diedit manual lalu diselundupkan ke git.
 
 ```bash
-# Install for a specific client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Validate the parts are seated
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Preview install (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Parameter | Nilai |
-|-----------|--------|
+|-----------|-------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (opsional) | `lean`, `guided`, `structured`; hanya menyesuaikan kepadatan advisory |
+| `--process-scaffold` (opsional) | `lean`, `guided`, `structured`; hanya kepadatan advisory prompt—**tidak pernah** mengubah enforcement |
+
+Bootstrap lokal paling umum—pasang keempat client sekaligus:
 
 ```bash
-# Install all four clients (common local bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Inspect or adjust the repo profile (agents write via CLI only)
+Profile repo selalu diubah lewat CLI (jangan edit YAML manual—itu mengundang masalah). Untuk membawa setup ke repo lain, export dulu, lalu check:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Export a portable profile into a subject; wire fragments, then check
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` dipertahankan hanya sebagai jalur kompatibilitas full-plugin yang eksplisit untuk workflow lama. Ini bukan lagi jalur instalasi yang direkomendasikan. Materialization library default tidak menyalin vendor plugins, hooks, atau skills di luar allowlist; rak part memiliki inventaris karena suatu alasan.
+`PLUGIN` hanya bertahan sebagai pintu kompatibilitas full-plugin yang eksplisit untuk workflow lama—bukan lagi jalur yang disarankan. Materialization library default tidak menyalin vendor plugins, hooks, atau skill apa pun di luar allowlist.
 
-## 3. (Opsional) Bawa masuk mobil Anda
+## Masukkan mobil Anda (opsional: hubungkan subject)
 
-Clone publik dapat menjalankan public trusted suite tanpa repo produk privat. Hubungkan mobil pelanggan ke ruang servis lokal hanya ketika Anda perlu melakukan sync, import, atau compare pada subject nyata:
+Hanya ingin memastikan bengkel serbahijau? **Jangan hubungkan apa pun**—clone publik tidak bergantung pada repo produk privat dan tetap dapat menjalankan trusted suite sampai semuanya hijau.
+
+Jalankan baris berikut hanya saat Anda benar-benar ingin melakukan sync / import / compare pada subject nyata:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edit remotes to repos you can access, then:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-Urutan itu penting:
+Ingat satu urutan: **buat `manifest.yaml` → sync → `--pin` untuk menulis balik versinya → jalankan `check-local-absorb.sh` sampai `harness-ready`**. Loloskan gate ini dulu; baru import / compare / score boleh berjalan.
 
-1. Buat `subjects/manifest.yaml` dari contoh. Arahkan remotes-nya ke repo yang dapat Anda akses.
-2. Jalankan sync untuk mengambil harness surface setiap subject.
-3. Gunakan `<id> --pin` untuk mencatat revision tepat yang ingin Anda evaluasi.
-4. Jalankan local absorb check. Subject yang lolos berstatus `harness-ready`; baru setelah itu import, compare, dan score dapat menghasilkan hasil yang tepercaya.
+Semua ini tetap lokal dan sudah masuk gitignore—jangan paksa masuk commit; pre-commit hook akan langsung memantulkannya:
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/`, dan `comparisons/` adalah mobil pelanggan dan work order. Semuanya tetap lokal, masuk gitignore, dan tidak pernah masuk showroom publik. Ini bukan kerahasiaan; ini kendali kunci dasar.
+- `subjects/manifest.yaml`
+- `pin.json` dan `checkout/` milik setiap subject
+- `snapshots/`, `comparisons/`
 
 ---
 
-Mobil sekarang bergerak dengan tenaganya sendiri. Bagian selanjutnya adalah referensi ruang servis.
+Berikut dinding referensi harian—ambil tool saat perlu; tak perlu membaca semuanya sekaligus.
 
-## Perintah umum
+## Perintah umum (dinding tool)
 
-| Tujuan | Perintah |
-|---------|---------|
-| Public trusted suite (menutup loop / CI) | `bash tools/harness/test-harness.sh` |
+| Yang ingin Anda lakukan | Baris yang dijalankan |
+|-------------------------|----------------------|
+| Public trusted suite (dyno / berbentuk CI) | `bash tools/harness/test-harness.sh` |
 | Validasi Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
 | Sync harness surface | `bash tools/sync/sync-subjects.sh` |
 | Tulis ulang pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
 | Kesiapan absorb lokal | `bash tools/harness/check-local-absorb.sh --all` |
 | Import snapshot | `python3 tools/import/import_subject.py --all` |
-| Laporan compare | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
+| Compare report | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
 | Score | `python3 tools/score/score_subject.py <id>` |
 | Laporan mingguan | `python3 tools/harness/weekly_report.py` |
 
-## Struktur
+## Denah bengkel (lokasi setiap part)
 
-| Path | Peran | Di git? |
-|------|------|---------|
+| Path | Isinya | Di git? |
+|------|--------|---------|
 | `agent-kit/skills` | Methodology terbuka (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | Template hooks/settings client | ✓ |
+| `agent-kit/hooks/clients/` | Template hooks / settings per client | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Output instalasi | ✗ |
 | `subjects/manifest.example.yaml` | Contoh registry publik | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Registry / clone lokal | ✗ |
@@ -161,9 +173,9 @@ Mobil sekarang bergerak dengan tenaganya sendiri. Bagian selanjutnya adalah refe
 | `testdata/` | Fixture publik (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Produk absorb | ✗ |
 | `docs/harness/` | Design + ledgers | sebagian |
-| `AGENTS.md` | SSOT constraint (`CLAUDE.md` → file ini) | ✓ |
+| `AGENTS.md` | SSOT constraint (`CLAUDE.md` mengarah ke sini) | ✓ |
 
-## Dokumentasi
+## Rak manual (gali lebih dalam)
 
 - [`docs/README.md`](../README.md) — aturan penempatan dokumentasi
 - [`docs/harness/design.md`](../harness/design.md) — design harness repo ini
@@ -172,4 +184,4 @@ Mobil sekarang bergerak dengan tenaganya sendiri. Bagian selanjutnya adalah refe
 
 ## Lisensi
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — bawa keluar dari dealer sesuka hati; suratnya ada di sini.

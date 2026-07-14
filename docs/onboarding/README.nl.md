@@ -23,124 +23,136 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **Deze werkplaats werkt aan jouw auto: de coding harness.** Dit is de beschermlaag voor AI-ontwikkeling rond een productrepository. Die productrepository — de subject — bezit de auto; de businesscode is de motor, en die motor laten we dicht.
-> De korte route: voer de installatie van één regel uit → installeer Agent-Kit voor Cursor, Claude Code of Codex → koppel desgewenst een echte subject en voer daarna sync, pin en de controle op `harness-ready` uit. Nieuwe onderdelen gaan nog steeds op de testbank. Lakinspectie is geen testplan.
+> **In één zin:** dit is een chopshop voor de *vangrails* van je repo. Op de brug staat niet je businesscode, maar de **coding harness** eromheen: de laag die voorkomt dat een AI (Cursor, Claude Code, Codex) bochten afsnijdt, ten onrechte „klaar” roept of rommel in git duwt die daar niet thuishoort.
+>
+> **Wat heb jij eraan:** rijd meteen weg met onze afgestelde methodologie-skills en foolproof hooks, of schroef dezelfde vangrails op je eigen repo's. We komen niet aan de motor (je businessbroncode); we lassen alleen de rolkooi eromheen totdat een AI hem niet meer achteloos in de kreukels rijdt.
+>
+> **Drie versnellingen om weg te komen:** installatie in één regel → (contact aan) Agent-Kit in het rek → (optioneel) je eigen subject binnenrijden. Trap vóór sluitingstijd `bash tools/harness/test-harness.sh` in: alle lampjes groen betekent goedgekeurd en straatlegaal.
 
-| Term | Betekenis (werkplaatsvergelijking) |
-|------|---------|
-| **coding harness** | Jouw auto: de beschermlaag voor AI-ontwikkeling rond een productrepository (rules, skills, hooks, trusted suite en ledgers) |
-| **subject** | De productrepository die de auto bezit (lokale clone; wordt hier niet gecommit) |
-| **harness surface** | De onderdelenruimte: `AGENTS.md`, skills, hooks en vergelijkbare beschermingsbestanden; geen businesscode |
-| **Agent-Kit** | Het onderdelenrek: materialiseert methodologische skills en hook-templates in Cursor, Claude Code, Codex enzovoort |
-| **public trusted suite** | De testbank: `bash tools/harness/test-harness.sh` (hetzelfde als L2 CI) |
+## Woordenlijst (werkplaatstaal)
 
-## 1. Binnenkomst (initialiseren)
+Deze woorden kom je hieronder overal tegen. Leer ze hier één keer; daarna gebruikt de handleiding ze zonder omhaal.
 
-De snelste werkplaatsingang is de installer van één regel. Deze clonet de repository, initialiseert submodules, installeert git hooks en Agent-Kit, en voert daarna de public trusted suite uit:
+| Werkplaatstaal | Gewoon Nederlands |
+|----------------|-------------------|
+| **coding harness** | De „auto” waaraan we echt sleutelen: de volledige AI-ontwikkelvangrail rond een productrepo — rules, skills, hooks, trusted suite en ledgers |
+| **subject** | Een productrepo die de werkplaats in rijdt om te worden geabsorbeerd / vergeleken; alleen lokaal gecloned en **nooit** hier gecommit |
+| **harness surface** | De te tunen panelen van die auto (`AGENTS.md`, skills, hooks), niet de motor (businessbroncode) |
+| **Agent-Kit** | De rek-installer: zet methodologie-skills / hook-templates klaar voor Cursor, Claude Code, Codex enzovoort |
+| **public trusted suite** | `bash tools/harness/test-harness.sh` — de rollenbank voordat deze garage iets aflevert (dezelfde installatie als L2 CI) |
+
+## Snelste rijstrook: intake in één regel
+
+Eén commando doet alles: de garage clonen, submodules ophalen, git hooks installeren, Agent-Kit in het rek hangen en meteen door naar de rollenbank (de public trusted suite).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-Gebruik de gelijkwaardige pipe-vorm als je shell geen process substitution ondersteunt:
+Te modern? De ouderwetse pipe start dezelfde motor:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-De optionele omgevingsvariabelen zijn `TARGET_DIR` en `CLIENT`. Stel `CLIENT` in op `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+Wil je bepalen waar hij landt en voor wie de bedrading wordt gelegd? Stel deze twee omgevingsvariabelen in:
 
-Als handmatig alternatief, of om elke stap te volgen:
+- `TARGET_DIR` — de installatiemap
+- `CLIENT` — de aan te sluiten client: `cursor` / `claude` / `codex` / `codex-native`, of `skip` om Agent-Kit voor later te bewaren
+
+De one-liner hangt Agent-Kit ook op en draait de suite voor je — **de meeste mensen kunnen hier de motor uitzetten en naar huis**. Wil je versnelling voor versnelling monteren, of sloeg de one-liner onderweg af? Neem dan hieronder de handmatige rijstrook.
+
+## Handmatige intake (zelf monteren)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# Als je --recurse-submodules bent vergeten
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Installeer de L1-veiligheidscontrole (blokkeert private trees; voert de suite uit wanneer nodig)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-Je hoort nu in `los-santos-customs/` te staan, met geïnitialiseerde submodules en geïnstalleerde git hooks. De route van één regel installeert ook Agent-Kit voor de gekozen client en voert de public suite uit. Ging je handmatig te werk, ga dan verder met §2. Een handgeschakelde versnellingsbak vraagt één extra stap; uit nostalgie is dat niet.
+De garagedeur staat nu alleen nog maar open; de onderdelenkist (Agent-Kit) staat nog op de vloer. Ga dus door.
 
-## 2. Onderdelen monteren (Agent-Kit)
+## Agent-Kit ophangen (onderdelenkist tegen de muur)
 
-Agent-Kit installeert de skills en hooks van deze werkplaats in je editor of CLI. Een kale installatie levert deze bewust gekozen standaardinstellingen:
+Agent-Kit zet de methodologie-skills en hooks van deze repo in je editor / CLI. Een kale installatie levert een afgestelde standaardset: lokale methodologie, een selectie SP-skills voor verification / TDD / review, een Matt-library die je bewust aanroept en een laagfrequente advisory router.
 
-- lokale methodologie;
-- geselecteerde SP-skills voor verificatie, TDD en review;
-- een door de gebruiker aangeroepen Matt-library;
-- een laagfrequente adviserende router.
-
-De bootstrap `using-superpowers` / `brainstorming` en hooks van leveranciers worden niet geïnstalleerd. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) zijn installatie-uitvoer en worden niet gecommit. Genereer ze opnieuw met install; gegenereerde bestanden hebben geen plaatwerk nodig.
+Hij smokkelt geen `using-superpowers` / `brainstorming`-bootstrap binnen en laat vendor hooks met rust; die zijn alleen opt-in. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) zijn **installatie-uitvoer en worden nooit gecommit**. Genereer ze altijd opnieuw via install in plaats van ze met de hand te verbouwen en git in te smokkelen.
 
 ```bash
-# Installeer voor een specifieke client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Controleer of de onderdelen goed vastzitten
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Bekijk een voorbeeldinstallatie (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Parameter | Waarden |
-|-----------|--------|
+|-----------|---------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (optioneel) | `lean`, `guided`, `structured`; past alleen de adviesdichtheid aan |
+| `--process-scaffold` (optioneel) | `lean`, `guided`, `structured`; alleen de dichtheid van advisory prompts — raakt enforcement **nooit** |
+
+De gebruikelijkste lokale bootstrap hangt alle vier clients tegelijk op:
 
 ```bash
-# Installeer alle vier clients (gebruikelijke lokale bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Bekijk of wijzig het repository-profile (agents schrijven uitsluitend via de CLI)
+Het repo-profile loopt altijd via de CLI (de YAML met de hand bewerken is vragen om problemen). Wil je de configuratie meenemen naar een andere repo, exporteer hem dan eerst en controleer hem daarna:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Exporteer een overdraagbaar profile naar een subject; koppel fragments en controleer daarna
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` blijft alleen bestaan als expliciet compatibiliteitspad naar de volledige plugin voor oudere workflows. Het is niet langer het aanbevolen installatiepad. De standaardmaterialisatie van de library kopieert geen plugins, hooks of skills van leveranciers buiten de allowlist; het onderdelenrek heeft niet voor niets een inventaris.
+`PLUGIN` bestaat alleen nog als expliciet full-plugin-compatibiliteitsluik voor oudere workflows; het is niet meer de aanbevolen route. De standaardmaterialisatie van de library kopieert geen vendor plugins, hooks of skills buiten de allowlist.
 
-## 3. (Optioneel) Rijd je eigen auto binnen
+## Rijd je eigen auto binnen (optioneel: subject aansluiten)
 
-Een publieke clone kan de public trusted suite zonder private productrepositories uitvoeren. Koppel alleen een klantauto aan je lokale werkplaats wanneer je een echte subject wilt synchroniseren, importeren of vergelijken:
+Wil je alleen zien of alle lampjes van de garage groen worden? **Sluit niets aan.** Een public clone gebruikt nul private productrepo's en draait de trusted suite toch volledig groen.
+
+Voer deze regels alleen uit als je echt een subject wilt syncen / importeren / vergelijken:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Bewerk de remotes zodat ze verwijzen naar repositories waar je toegang toe hebt, en voer daarna uit:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # lokale harness-ready (niet de public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-De volgorde is belangrijk:
+Onthoud één volgorde: **`manifest.yaml` maken → sync → met `--pin` de versie terugschrijven → `check-local-absorb.sh` tot alles `harness-ready` is**. Eerst door die poort; pas daarna mogen import / compare / score rijden.
 
-1. Maak `subjects/manifest.yaml` op basis van het voorbeeld. Laat de remotes verwijzen naar repositories waar je toegang toe hebt.
-2. Voer sync uit om de harness surface van elke subject op te halen.
-3. Gebruik `<id> --pin` om precies de revisie vast te leggen die je wilt evalueren.
-4. Voer de lokale absorb-controle uit. Een geslaagde subject is `harness-ready`; pas daarna kunnen import, compare en score betrouwbare resultaten opleveren.
+Dit blijft lokaal en is al gitignored. Probeer het niet een commit in te wringen; de pre-commit hook stuurt het direct terug:
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/` en `comparisons/` zijn klantauto's en werkorders. Ze blijven lokaal, worden door git genegeerd en komen nooit in de publieke showroom. Dat is geen geheimhouding, maar eenvoudig sleutelbeheer.
+- `subjects/manifest.yaml`
+- `pin.json` en `checkout/` van ieder subject
+- `snapshots/`, `comparisons/`
 
 ---
 
-De auto rijdt nu op eigen kracht. De rest is werkplaatsreferentie.
+Hieronder hangt de dagelijkse gereedschapswand. Pak wat je nodig hebt; je hoeft hem niet in één keer uit je hoofd te leren.
 
-## Veelgebruikte commando's
+## Veelgebruikte commando's (gereedschapswand)
 
-| Doel | Commando |
-|---------|---------|
-| Public trusted suite (sluit de cyclus / CI) | `bash tools/harness/test-harness.sh` |
+| Wat je wilt | Uit te voeren regel |
+|-------------|---------------------|
+| Public trusted suite (rollenbank / CI-vorm) | `bash tools/harness/test-harness.sh` |
 | Agent-Kit valideren | `bash tools/harness/agent-kit.sh validate` |
-| Harness surface synchroniseren | `bash tools/sync/sync-subjects.sh` |
+| Harness surface syncen | `bash tools/sync/sync-subjects.sh` |
 | Pin herschrijven | `bash tools/sync/sync-subjects.sh <id> --pin` |
 | Lokale absorb-gereedheid | `bash tools/harness/check-local-absorb.sh --all` |
 | Snapshot importeren | `python3 tools/import/import_subject.py --all` |
@@ -148,28 +160,28 @@ De auto rijdt nu op eigen kracht. De rest is werkplaatsreferentie.
 | Score uitvoeren | `python3 tools/score/score_subject.py <id>` |
 | Wekelijks rapport maken | `python3 tools/harness/weekly_report.py` |
 
-## Indeling
+## Plattegrond (waar ieder onderdeel ligt)
 
-| Pad | Rol | In git? |
-|------|------|---------|
+| Pad | Wat het is | In git? |
+|-----|------------|---------|
 | `agent-kit/skills` | Open methodologie (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | Templates voor client hooks/settings | ✓ |
+| `agent-kit/hooks/clients/` | Hooks / settings-templates per client | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Installatie-uitvoer | ✗ |
-| `subjects/manifest.example.yaml` | Voorbeeld van publieke registry | ✓ |
+| `subjects/manifest.example.yaml` | Openbaar registry-voorbeeld | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Lokale registry / clone | ✗ |
 | `tools/` | sync / import / compare / score / suite / hooks | ✓ |
-| `testdata/` | Publieke fixtures (CI) | ✓ |
+| `testdata/` | Openbare fixtures (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Absorb-producten | ✗ |
 | `docs/harness/` | Design + ledgers | gedeeltelijk |
-| `AGENTS.md` | SSOT voor beperkingen (`CLAUDE.md` → dit bestand) | ✓ |
+| `AGENTS.md` | SSOT voor beperkingen (`CLAUDE.md` verwijst hiernaar) | ✓ |
 
-## Documentatie
+## Werkplaatshandboek (meer diepgang)
 
 - [`docs/README.md`](../README.md) — regels voor documentatieplaatsing
-- [`docs/harness/design.md`](../harness/design.md) — harness-design van deze repository
+- [`docs/harness/design.md`](../harness/design.md) — harness-design van deze repo
 - [`docs/specs/`](../specs/) — designarchief
 - [`AGENTS.md`](../../AGENTS.md) — voltooiingsdefinitie, blacklist en mechanismeoverzicht
 
 ## Licentie
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — rijd ermee weg zoals je wilt; het kentekenbewijs ligt klaar.

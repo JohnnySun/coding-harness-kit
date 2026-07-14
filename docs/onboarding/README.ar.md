@@ -23,122 +23,134 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **هذا المتجر يعمل على سيارتك: coding harness.** وهي طبقة حواجز تطوير الذكاء الاصطناعي المحيطة بمستودع منتج. يمتلك مستودع المنتج — أي subject — السيارة؛ وشيفرة الأعمال هي المحرك، ونحن نترك المحرك مغلقًا.
-> المسار المختصر: شغّل أمر الاستقبال ذي السطر الواحد ← ثبّت Agent-Kit لـ Cursor أو Claude Code أو Codex ← وصّل subject حقيقيًا اختياريًا، ثم نفّذ sync وpin وتحقق من `harness-ready`. يجب أن تمر القطع الجديدة على منصة القياس. فحص الطلاء ليس خطة اختبار.
+> **في سطر واحد:** هذا مرآب تعديل *حواجز الأمان* في مستودعك. ما يصعد على الرافعة ليس شيفرة أعمالك، بل **coding harness** المحيط بها: الطبقة التي تمنع الذكاء الاصطناعي (Cursor وClaude Code وCodex) من اختصار الطريق أو ادعاء أن العمل «اكتمل» أو دسّ ما لا ينبغي حفظه داخل git.
+>
+> **ما الذي ستكسبه:** يمكنك الانطلاق مباشرة بمهاراتنا المنهجية المضبوطة وhooks المقاومة للأخطاء، أو تركيب حواجز الأمان نفسها في مستودعاتك. لا نلمس المحرك (شيفرة أعمالك)؛ إنما نلحم قفص الحماية الخارجي حتى لا يستطيع الذكاء الاصطناعي سحقه بلا اكتراث.
+>
+> **ثلاث سرعات للانطلاق:** تثبيت بسطر واحد ← (تشغيل المحرك) ضع Agent-Kit على الرف ← (اختياري) أدخل subject الخاص بك. وقبل إغلاق الورشة، شغّل `bash tools/harness/test-harness.sh`؛ إذا أضاءت لوحة العدادات كلها بالأخضر، فقد اجتازت السيارة الفحص وأصبحت صالحة للطريق.
 
-| المصطلح | المعنى (تشبيه المتجر) |
-|------|---------|
-| **coding harness** | سيارتك: طبقة حواجز تطوير الذكاء الاصطناعي حول مستودع منتج (rules وskills وhooks وtrusted suite وledgers) |
-| **subject** | مستودع المنتج الذي يملك السيارة (نسخة محلية؛ لا تُحفظ في هذا المستودع) |
-| **harness surface** | حجرة القطع: `AGENTS.md` وskills وhooks وملفات الحواجز المشابهة؛ وليست شيفرة الأعمال |
-| **Agent-Kit** | رف القطع: ينشر skills المنهجية وقوالب hooks في Cursor وClaude Code وCodex وغيرها |
-| **public trusted suite** | منصة القياس: `bash tools/harness/test-harness.sh` (نفس L2 CI) |
+## مسرد المصطلحات (لغة الورشة)
 
-## 1. الاستقبال (التهيئة)
+سترى هذه الكلمات في كل مكان أدناه. تعلّمها مرة هنا، ثم ستستخدمها بقية الوثيقة مباشرة.
 
-أسرع طريق إلى حجرة العمل هو المثبّت ذو السطر الواحد. فهو ينسخ المستودع، ويهيئ submodules، ويثبّت git hooks وAgent-Kit، ثم يشغّل public trusted suite:
+| لغة الورشة | المعنى ببساطة |
+|------------|---------------|
+| **coding harness** | «السيارة» التي نعمل عليها فعلًا: طبقة حواجز تطوير الذكاء الاصطناعي كاملة حول مستودع منتج، وتشمل rules وskills وhooks وtrusted suite وledgers |
+| **subject** | مستودع منتج يدخل حجرة الصيانة لإجراء absorb / compare؛ يُنسخ محليًا فقط ولا يُحفظ هنا **أبدًا** |
+| **harness surface** | ألواح التعديل في تلك السيارة (`AGENTS.md` وskills وhooks)، لا المحرك (شيفرة الأعمال) |
+| **Agent-Kit** | مثبّت رف القطع؛ يضع skills المنهجية / hook templates في Cursor وClaude Code وCodex وغيرها |
+| **public trusted suite** | `bash tools/harness/test-harness.sh` — اختبار منصة القياس قبل أن تسلّم الورشة أي شيء (المنصة نفسها المستخدمة في L2 CI) |
+
+## المسار الأسرع: استقبال بسطر واحد
+
+ينجز أمر واحد المهمة كلها: ينسخ الورشة، ويجلب submodules، ويثبّت git hooks، ويرتّب Agent-Kit على الرف، ثم يدفع السيارة مباشرة إلى منصة القياس (أي public trusted suite).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-إذا لم تكن shell لديك تدعم process substitution، فاستخدم صيغة pipe المكافئة:
+أكثر أناقة مما يلزم؟ صيغة pipe التقليدية تشغّل المحرك نفسه:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-متغيرا البيئة الاختياريان هما `TARGET_DIR` و`CLIENT`. اضبط `CLIENT` على `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+هل تريد اختيار مكان التثبيت والعميل الذي سيُوصّل؟ اضبط متغيرَي البيئة التاليين:
 
-للرجوع إلى التثبيت اليدوي، أو لمتابعة كل خطوة:
+- `TARGET_DIR` — المجلد الذي سيتم التثبيت فيه
+- `CLIENT` — العميل المطلوب توصيله: `cursor` / `claude` / `codex` / `codex-native`، أو `skip` لتأجيل Agent-Kit
+
+يرتّب أمر السطر الواحد Agent-Kit ويشغّل suite نيابةً عنك أيضًا؛ **يمكن لمعظم الناس إطفاء المحرك وإغلاق الورشة هنا**. أتريد تركيب كل سرعة على حدة، أم تعطل أمر السطر الواحد في منتصف الطريق؟ اتبع المسار اليدوي أدناه.
+
+## الاستقبال اليدوي (ركّبه بنفسك)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# If you forgot --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Install L1 safety check (blocks private trees; runs suite when needed)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-يجب أن تكون الآن داخل `los-santos-customs/` مع تهيئة submodules وتثبيت git hooks. يثبّت مسار السطر الواحد أيضًا Agent-Kit للعميل الذي اخترته ويشغّل public suite. إذا اتبعت المسار اليدوي، فتابع إلى §2. ناقل الحركة اليدوي يحتاج خطوة إضافية؛ ولا علاقة لذلك بالحنين.
+حتى هذه اللحظة لم تفعل سوى فتح باب حجرة الصيانة؛ فما يزال صندوق القطع (Agent-Kit) على الأرض. واصل العمل.
 
-## 2. تركيب القطع (Agent-Kit)
+## ترتيب Agent-Kit (صندوق القطع على الحائط)
 
-يثبّت Agent-Kit مهارات هذا المتجر وhooks الخاصة به في المحرر أو CLI. يوفر التثبيت الأساسي هذه الإعدادات الافتراضية المنتقاة:
+يضع Agent-Kit مهارات هذا المستودع المنهجية وhooks في محررك / CLI. يمنحك التثبيت الأساسي مجموعة افتراضية مضبوطة: منهجية محلية، وتشكيلة منتقاة من مهارات SP الخاصة بـ verification / TDD / review، ومكتبة Matt تستدعيها عن قصد، إلى جانب advisory router منخفض التكرار.
 
-- منهجية محلية؛
-- مهارات SP منتقاة للتحقق وTDD والمراجعة؛
-- مكتبة Matt يستدعيها المستخدم؛
-- موجّه إرشادي منخفض التكرار.
-
-لا يثبّت bootstrap الخاص بـ `using-superpowers` / `brainstorming` ولا vendor hooks. أشجار العملاء (`.cursor` / `.claude` / `.codex` / `.agents`) هي مخرجات تثبيت ولا تُحفظ في git. أعد إنشاءها بأمر install؛ فالملفات المولدة لا تحتاج إلى إصلاح هيكل.
+وهو **لا** يدسّ bootstrap الخاص بـ `using-superpowers` / `brainstorming`، ولا يعبث بـ vendor hooks؛ فكلاهما اختياري فقط. أما أشجار العملاء (`.cursor` / `.claude` / `.codex` / `.agents`) فهي **مخرجات تثبيت لا تُحفظ أبدًا**: أعد إنشاءها دائمًا عبر install بدل تعديلها يدويًا ومحاولة تهريبها إلى git.
 
 ```bash
-# Install for a specific client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Validate the parts are seated
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Preview install (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | المعامل | القيم |
-|-----------|--------|
+|---------|-------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (اختياري) | `lean`, `guided`, `structured`؛ يضبط كثافة الإرشادات فقط |
+| `--process-scaffold` (اختياري) | `lean`, `guided`, `structured`؛ يغيّر كثافة advisory prompts فقط، ولا يمسّ enforcement **أبدًا** |
+
+أكثر طرق bootstrap المحلية شيوعًا: رتّب العملاء الأربعة دفعة واحدة.
 
 ```bash
-# Install all four clients (common local bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Inspect or adjust the repo profile (agents write via CLI only)
+تُدار إعدادات المستودع دائمًا عبر CLI (لا تعدّل YAML يدويًا؛ فتلك دعوة صريحة للمتاعب). لنقل الإعداد إلى مستودع آخر، صدّره أولًا ثم تحقّق منه:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Export a portable profile into a subject; wire fragments, then check
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-يبقى `PLUGIN` فقط كمسار توافق صريح مع full-plugin لسير العمل القديم. لم يعد مسار التثبيت الموصى به. لا ينسخ materialization الافتراضي للمكتبة vendor plugins أوhooks أوskills خارج allowlist؛ فوجود قائمة جرد لرف القطع مقصود.
+لم يعد `PLUGIN` سوى مخرج توافق صريح بنمط full-plugin من أجل workflows القديمة؛ ولم يعد المسار الموصى به. لا تنسخ library materialization الافتراضية أي vendor plugins أو hooks أو skills خارج allowlist.
 
-## 3. إدخال سيارتك الخاصة (اختياري)
+## أدخل سيارتك الخاصة (اختياري: وصّل subject)
 
-يمكن لنسخة عامة تشغيل public trusted suite من دون أي مستودعات منتجات خاصة. لا توصل سيارة عميل بحجرة العمل المحلية إلا عندما تحتاج إلى sync أوimport أوcompare لـ subject حقيقي:
+أتريد فقط التأكد من أن كل مؤشرات الورشة خضراء؟ **لا توصل شيئًا**؛ فالنسخة العامة لا تعتمد على أي مستودعات منتجات خاصة، ومع ذلك تشغّل trusted suite حتى تمتلئ اللوحة باللون الأخضر.
+
+لا تشغّل الأسطر التالية إلا عندما تريد فعلًا إجراء sync / import / compare لـ subject حقيقي:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edit remotes to repos you can access, then:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-الترتيب مهم:
+احفظ ترتيبًا واحدًا: **أنشئ `manifest.yaml` ← نفّذ sync ← استخدم `--pin` لكتابة الإصدار ← شغّل `check-local-absorb.sh` حتى تصل إلى `harness-ready`**. اجتز هذه البوابة أولًا؛ عندها فقط يُسمح لعمليات import / compare / score بالعمل.
 
-1. أنشئ `subjects/manifest.yaml` من المثال. وجّه remotes إلى مستودعات يمكنك الوصول إليها.
-2. شغّل sync لجلب harness surface لكل subject.
-3. استخدم `<id> --pin` لتسجيل المراجعة الدقيقة التي تريد تقييمها.
-4. شغّل فحص absorb المحلي. يصبح subject الناجح `harness-ready`؛ وعندها فقط يمكن أن تنتج عمليات import وcompare وscore نتائج موثوقة.
+تبقى العناصر التالية محلية، وهي مضمنة مسبقًا في gitignore. لا تحاول إجبارها على دخول commit؛ فسيردّها pre-commit hook فورًا:
 
-تُعد `subjects/manifest.yaml` و`pin.json` و`checkout/` و`snapshots/` و`comparisons/` سيارات عملاء وأوامر عمل. تبقى محلية، ويستثنيها git، ولا تدخل صالة العرض العامة أبدًا. هذه ليست سرية؛ بل إدارة أساسية للمفاتيح.
+- `subjects/manifest.yaml`
+- ملف `pin.json` ومجلد `checkout/` لكل subject
+- `snapshots/` و`comparisons/`
 
 ---
 
-أصبحت السيارة تتحرك بقوتها الذاتية. وما يلي مرجع لحجرة الصيانة.
+ما يلي هو جدار المراجع للعمل اليومي؛ تناول الأداة التي تحتاج إليها، ولا حاجة إلى قراءة كل شيء دفعة واحدة.
 
-## أوامر شائعة
+## الأوامر الشائعة (جدار الأدوات)
 
-| الغرض | الأمر |
-|---------|---------|
-| Public trusted suite (إغلاق الحلقة / CI) | `bash tools/harness/test-harness.sh` |
+| ما تريد فعله | السطر المطلوب تشغيله |
+|--------------|----------------------|
+| Public trusted suite (منصة القياس / بشكل يماثل CI) | `bash tools/harness/test-harness.sh` |
 | التحقق من Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
 | مزامنة harness surface | `bash tools/sync/sync-subjects.sh` |
 | إعادة كتابة pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
@@ -148,22 +160,22 @@ bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the 
 | Score | `python3 tools/score/score_subject.py <id>` |
 | التقرير الأسبوعي | `python3 tools/harness/weekly_report.py` |
 
-## البنية
+## مخطط الورشة (مكان كل قطعة)
 
-| المسار | الدور | ضمن git؟ |
-|------|------|---------|
+| المسار | ماهيته | ضمن git؟ |
+|--------|--------|----------|
 | `agent-kit/skills` | منهجية مفتوحة (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | قوالب hooks/settings للعملاء | ✓ |
+| `agent-kit/hooks/clients/` | قوالب hooks / settings لكل عميل | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | مخرجات التثبيت | ✗ |
 | `subjects/manifest.example.yaml` | مثال عام للسجل | ✓ |
-| `subjects/manifest.yaml` + `<id>/{pin,checkout}` | سجل / نسخة محلية | ✗ |
+| `subjects/manifest.yaml` + `<id>/{pin,checkout}` | سجل / clone محلي | ✗ |
 | `tools/` | sync / import / compare / score / suite / hooks | ✓ |
 | `testdata/` | تجهيزات عامة (CI) | ✓ |
-| `snapshots/` / `comparisons/` | مخرجات absorb | ✗ |
-| `docs/harness/` | التصميم + السجلات | جزئي |
-| `AGENTS.md` | المصدر الوحيد لقيود النظام (`CLAUDE.md` → إليه) | ✓ |
+| `snapshots/` / `comparisons/` | نواتج absorb | ✗ |
+| `docs/harness/` | التصميم + ledgers | جزئي |
+| `AGENTS.md` | SSOT للقيود (`CLAUDE.md` يشير إليه) | ✓ |
 
-## التوثيق
+## رف الأدلة (للتعمق)
 
 - [`docs/README.md`](../README.md) — قواعد وضع الوثائق
 - [`docs/harness/design.md`](../harness/design.md) — تصميم harness لهذا المستودع
@@ -172,4 +184,4 @@ bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the 
 
 ## الترخيص
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — قدها خارج الورشة كما تشاء؛ أوراق الملكية جاهزة.

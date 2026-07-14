@@ -23,122 +23,134 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **Esta oficina trabalha no seu carro: o coding harness.** Ele é a camada de proteções para desenvolvimento com AI ao redor de um repositório de produto. Esse repositório — o subject — é o dono do carro; o código de negócio é o motor, e deixamos o motor fechado.
-> O caminho curto: execute a instalação em uma linha → instale o Agent-Kit para Cursor, Claude Code ou Codex → opcionalmente conecte um subject real, depois faça sync, pin e verifique `harness-ready`. Peças novas ainda vão para o dinamômetro. Inspeção de pintura não é plano de testes.
+> **Em uma linha:** esta é uma oficina de desmanche para os *guardrails* do seu repo. O que sobe no elevador não é o código de negócio, mas o **coding harness** ao redor dele: a camada que impede uma AI (Cursor, Claude Code, Codex) de cortar caminho, fingir que “terminou” ou empurrar para o git o que não deveria ser commitado.
+>
+> **O que você ganha com isso:** use nossas skills de metodologia tunadas e hooks à prova de barbeiragem como estão, ou instale os mesmos guardrails nos seus próprios repos. Não mexemos no motor (seu código-fonte de negócio); só soldamos a gaiola externa até uma AI não conseguir amassá-la por descuido.
+>
+> **Três marchas para sair:** instalação em uma linha → (ignição) Agent-Kit na estante → (opcional) traga seu próprio subject. Antes de fechar a oficina, rode `bash tools/harness/test-harness.sh`: painel todo verde significa vistoria aprovada e carro liberado para a rua.
 
-| Termo | Significado (mapeamento da oficina) |
-|------|---------|
-| **coding harness** | Seu carro: a camada de proteções para desenvolvimento com AI ao redor de um repositório de produto (rules, skills, hooks, trusted suite e ledgers) |
-| **subject** | O repositório de produto que é dono do carro (clone local; não é commitado aqui) |
-| **harness surface** | A área de peças: `AGENTS.md`, skills, hooks e arquivos de proteção semelhantes; não é código de negócio |
-| **Agent-Kit** | A estante de peças: materializa skills de metodologia e templates de hooks no Cursor, Claude Code, Codex etc. |
-| **public trusted suite** | O dinamômetro: `bash tools/harness/test-harness.sh` (igual ao L2 CI) |
+## Glossário (gíria de oficina)
 
-## 1. Entrada (inicialização)
+Você verá estes termos por toda parte. Aprenda uma vez aqui; o restante do documento apenas os utiliza.
 
-A forma mais rápida de entrar na oficina é o instalador de uma linha. Ele clona o repositório, inicializa submodules, instala git hooks e o Agent-Kit e, depois, executa a public trusted suite:
+| Gíria | Em português claro |
+|-------|---------------------|
+| **coding harness** | O “carro” em que realmente mexemos — toda a camada de guardrails para desenvolvimento com AI ao redor de um repo de produto: rules, skills, hooks, trusted suite, ledgers |
+| **subject** | Um repo de produto trazido para a oficina para absorb / compare; clonado apenas localmente e **nunca** commitado aqui |
+| **harness surface** | Os painéis modificáveis desse carro (`AGENTS.md`, skills, hooks), não o motor (código-fonte de negócio) |
+| **Agent-Kit** | O instalador da estante — coloca skills de metodologia / hook templates no Cursor, Claude Code, Codex etc. |
+| **public trusted suite** | `bash tools/harness/test-harness.sh` — a passada no dinamômetro antes de esta oficina entregar qualquer coisa (mesmo equipamento do L2 CI) |
+
+## Faixa mais rápida: entrada em uma linha
+
+Um comando faz tudo: clona a oficina, baixa submodules, instala git hooks, põe o Agent-Kit na estante e leva direto para o dinamômetro (a public trusted suite).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-Se o seu shell não oferecer process substitution, use a forma equivalente com pipe:
+Moderno demais? O velho pipe dá partida no mesmo motor:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-As variáveis de ambiente opcionais são `TARGET_DIR` e `CLIENT`. Defina `CLIENT` como `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+Quer escolher onde será instalado e qual client será ligado? Defina estas duas variáveis de ambiente:
 
-Como alternativa manual, ou para acompanhar cada aperto de chave:
+- `TARGET_DIR` — diretório de instalação
+- `CLIENT` — client a conectar: `cursor` / `claude` / `codex` / `codex-native`; ou `skip` para deixar o Agent-Kit para depois
+
+O comando de uma linha também instala o Agent-Kit e roda a suite — **a maioria das pessoas pode desligar o motor e bater o ponto aqui**. Quer montar uma marcha por vez ou o one-liner morreu no caminho? Pegue a faixa manual abaixo.
+
+## Entrada manual (monte você mesmo)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# Se você esqueceu --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Instala a verificação de segurança L1 (bloqueia árvores privadas; executa a suite quando necessário)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-Agora você deve estar em `los-santos-customs/`, com os submodules inicializados e os git hooks instalados. O caminho de uma linha também instala o Agent-Kit para o cliente selecionado e executa a public suite. Se escolheu o caminho manual, continue na §2. Transmissões manuais têm uma etapa extra; aqui não é nostalgia.
+Neste ponto, só abrimos a porta da oficina — a caixa de peças (Agent-Kit) ainda está no chão. Continue.
 
-## 2. Instalar as peças (Agent-Kit)
+## Instale o Agent-Kit (caixa de peças na parede)
 
-O Agent-Kit instala as skills e os hooks desta oficina no seu editor ou CLI. Uma instalação sem opções oferece estes padrões definidos pelo projeto:
+O Agent-Kit instala as skills de metodologia e os hooks deste repo no seu editor / CLI. Uma instalação básica entrega um conjunto padrão tunado: metodologia local, uma seleção de skills SP para verification / TDD / review, uma biblioteca Matt chamada de propósito e um advisory router de baixa frequência.
 
-- metodologia local;
-- skills selecionadas de verificação, TDD e revisão do SP;
-- uma biblioteca Matt acionada pelo usuário;
-- um router consultivo de baixa frequência.
-
-Ele não instala o bootstrap `using-superpowers` / `brainstorming` nem hooks de fornecedores. As árvores dos clientes (`.cursor` / `.claude` / `.codex` / `.agents`) são resultados da instalação e não entram em commits. Gere-as novamente com install; arquivos gerados não precisam de funilaria.
+Ele não enfia escondido o bootstrap `using-superpowers` / `brainstorming` e não mexe em vendor hooks — esses são somente opt-in. As árvores dos clients (`.cursor` / `.claude` / `.codex` / `.agents`) são **resultados de instalação e nunca entram em commits**. Sempre regenere com install, em vez de editar à mão e contrabandear para o git.
 
 ```bash
-# Instala para um cliente específico
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Valida se as peças estão encaixadas
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Visualiza a instalação (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Parâmetro | Valores |
-|-----------|--------|
+|-----------|---------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (opcional) | `lean`, `guided`, `structured`; ajusta somente a densidade consultiva |
+| `--process-scaffold` (opcional) | `lean`, `guided`, `structured`; somente densidade de advisory prompts — **nunca** altera enforcement |
+
+O bootstrap local mais comum instala os quatro clients de uma vez:
 
 ```bash
-# Instala os quatro clientes (bootstrap local comum)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Examina ou ajusta o profile do repositório (agents escrevem somente pela CLI)
+O profile do repo sempre passa pela CLI (editar o YAML à mão é pedir problema). Para levar a configuração a outro repo, primeiro exporte e depois confira:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Exporta um profile portátil para um subject; conecta os fragments e depois verifica
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` permanece apenas como um caminho explícito de compatibilidade com o plugin completo para workflows antigos. Ele não é mais o caminho de instalação recomendado. A materialização padrão da biblioteca não copia plugins, hooks ou skills de fornecedores fora da allowlist; a estante de peças tem inventário por um motivo.
+`PLUGIN` só sobrevive como uma saída explícita de compatibilidade full-plugin para workflows antigos — não é mais o caminho recomendado. A materialização padrão da library não copia vendor plugins, hooks nem nenhuma skill fora da allowlist.
 
-## 3. (Opcional) Traga seu próprio carro
+## Traga seu próprio carro (opcional: conecte um subject)
 
-Um clone público pode executar a public trusted suite sem repositórios de produto privados. Conecte um carro de cliente à sua oficina local somente quando precisar fazer sync, import ou compare de um subject real:
+Só quer confirmar que a oficina acende tudo em verde? **Não conecte nada.** Um clone público não depende de nenhum repo de produto privado e, ainda assim, roda a trusted suite até ficar toda verde.
+
+Execute estas linhas apenas quando realmente quiser fazer sync / import / compare de um subject real:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edite os remotes para repositórios que você pode acessar e, depois:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # harness-ready local (não é a public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-A ordem é importante:
+Decore uma ordem: **crie `manifest.yaml` → sync → use `--pin` para registrar a versão → rode `check-local-absorb.sh` até ficar `harness-ready`**. Passe por esse gate primeiro; só depois import / compare / score podem rodar.
 
-1. Crie `subjects/manifest.yaml` a partir do exemplo. Aponte seus remotes para repositórios que você pode acessar.
-2. Execute sync para buscar a harness surface de cada subject.
-3. Use `<id> --pin` para registrar a revisão exata que pretende avaliar.
-4. Execute a verificação local de absorb. Um subject aprovado está `harness-ready`; só então import, compare e score podem produzir resultados confiáveis.
+Estes itens permanecem locais e já estão no gitignore. Não tente forçá-los em um commit; o pre-commit hook os devolve na hora:
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/` e `comparisons/` são carros e ordens de serviço dos clientes. Eles permanecem locais, são ignorados pelo git e nunca entram no showroom público. Isso não é sigilo; é controle básico de chaves.
+- `subjects/manifest.yaml`
+- `pin.json` e `checkout/` de cada subject
+- `snapshots/`, `comparisons/`
 
 ---
 
-O carro agora anda com a própria força. O restante é a referência da oficina.
+Abaixo fica o painel de ferramentas do dia a dia. Pegue uma quando precisar; não é necessário ler tudo de uma vez.
 
-## Comandos comuns
+## Comandos comuns (painel de ferramentas)
 
-| Finalidade | Comando |
-|---------|---------|
-| Public trusted suite (fecha o ciclo / CI) | `bash tools/harness/test-harness.sh` |
+| O que você quer | Linha para executar |
+|-----------------|---------------------|
+| Public trusted suite (dinamômetro / formato de CI) | `bash tools/harness/test-harness.sh` |
 | Validar o Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
 | Fazer sync da harness surface | `bash tools/sync/sync-subjects.sh` |
 | Reescrever o pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
@@ -148,12 +160,12 @@ O carro agora anda com a própria força. O restante é a referência da oficina
 | Executar score | `python3 tools/score/score_subject.py <id>` |
 | Gerar relatório semanal | `python3 tools/harness/weekly_report.py` |
 
-## Estrutura
+## Planta da oficina (onde fica cada peça)
 
-| Caminho | Função | Entra no git? |
-|------|------|---------|
+| Caminho | O que é | Entra no git? |
+|---------|---------|---------------|
 | `agent-kit/skills` | Metodologia aberta (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | Templates de hooks/settings dos clientes | ✓ |
+| `agent-kit/hooks/clients/` | Hooks / settings templates por client | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Resultados da instalação | ✗ |
 | `subjects/manifest.example.yaml` | Exemplo público de registry | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Registry / clone local | ✗ |
@@ -161,15 +173,15 @@ O carro agora anda com a própria força. O restante é a referência da oficina
 | `testdata/` | Fixtures públicas (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Produtos de absorb | ✗ |
 | `docs/harness/` | Design + ledgers | parcial |
-| `AGENTS.md` | SSOT de restrições (`CLAUDE.md` → ele) | ✓ |
+| `AGENTS.md` | SSOT de restrições (`CLAUDE.md` aponta para cá) | ✓ |
 
-## Documentação
+## Manual da oficina (vá mais fundo)
 
 - [`docs/README.md`](../README.md) — regras de localização da documentação
-- [`docs/harness/design.md`](../harness/design.md) — design do harness deste repositório
+- [`docs/harness/design.md`](../harness/design.md) — design do harness deste repo
 - [`docs/specs/`](../specs/) — arquivo de designs
 - [`AGENTS.md`](../../AGENTS.md) — definição de conclusão, blacklist e mapa de mecanismos
 
 ## Licença
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — saia dirigindo como quiser; o documento do carro está aqui.

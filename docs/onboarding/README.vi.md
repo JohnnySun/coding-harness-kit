@@ -23,147 +23,159 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **Xưởng này làm việc trên chiếc xe của bạn: coding harness.** Đây là lớp rào chắn phát triển AI bao quanh một repo sản phẩm. Repo sản phẩm đó—subject—sở hữu chiếc xe; source nghiệp vụ là động cơ, và chúng tôi để động cơ đóng kín.
-> Lộ trình ngắn: chạy lệnh tiếp nhận một dòng → cài Agent-Kit cho Cursor, Claude Code hoặc Codex → tùy chọn kết nối một subject thật, rồi sync, pin và kiểm tra `harness-ready`. Part mới vẫn phải lên dyno. Kiểm tra nước sơn không phải là kế hoạch kiểm thử.
+> **Gói gọn trong một dòng:** đây là lò độ *lan can bảo vệ* cho repo của bạn. Thứ được đưa lên cầu nâng không phải mã nguồn nghiệp vụ, mà là **coding harness** bao quanh nó—lớp ngăn AI (Cursor, Claude Code, Codex) đốt cháy giai đoạn, giả vờ “xong rồi”, hoặc nhét vào git những thứ không được phép commit.
+>
+> **Bạn được gì:** dùng ngay methodology skills đã tinh chỉnh và hooks chống thao tác nhầm của chúng tôi, hoặc gắn cùng bộ lan can đó vào repo của riêng bạn. Chúng tôi không đụng đến động cơ (source nghiệp vụ); chỉ hàn khung chống lật bên ngoài cho đến khi AI không thể tiện tay vò nát chiếc xe.
+>
+> **Ba số để lăn bánh:** cài bằng một dòng → (đề máy) đưa Agent-Kit lên giá → (tùy chọn) lái subject của bạn vào xưởng. Trước khi đóng ca, hãy chạy `bash tools/harness/test-harness.sh`—bảng đồng hồ xanh hết nghĩa là đã qua đăng kiểm, đủ điều kiện xuống đường.
 
-| Thuật ngữ | Ý nghĩa (theo cách gọi của xưởng) |
-|------|---------|
-| **coding harness** | Chiếc xe của bạn: lớp rào chắn AI-dev quanh repo sản phẩm (rules, skills, hooks, trusted suite, ledgers) |
-| **subject** | Repo sản phẩm sở hữu chiếc xe (clone cục bộ; không commit tại đây) |
-| **harness surface** | Khoang part: `AGENTS.md`, skills, hooks và các file rào chắn tương tự; không phải source nghiệp vụ |
-| **Agent-Kit** | Giá part: materialize methodology skills / hook templates vào Cursor, Claude Code, Codex, v.v. |
-| **public trusted suite** | Dyno: `bash tools/harness/test-harness.sh` (giống L2 CI) |
+## Bảng thuật ngữ (tiếng lóng trong xưởng)
 
-## 1. Tiếp nhận (khởi tạo)
+Bạn sẽ gặp những từ này khắp phần dưới. Học một lần ở đây; phần còn lại của tài liệu sẽ dùng thẳng.
 
-Lối nhanh nhất vào khoang sửa chữa là installer một dòng. Lệnh này clone repo, khởi tạo submodules, cài git hooks và Agent-Kit, rồi chạy public trusted suite:
+| Tiếng lóng | Nghĩa thông thường |
+|------------|--------------------|
+| **coding harness** | “Chiếc xe” mà chúng tôi thực sự chỉnh sửa: toàn bộ lớp bảo vệ phát triển bằng AI quanh repo sản phẩm—rules, skills, hooks, trusted suite và ledgers |
+| **subject** | Repo sản phẩm được đưa vào khoang để absorb / compare; chỉ clone cục bộ và **không bao giờ** commit tại đây |
+| **harness surface** | Các tấm ốp độ trên xe (`AGENTS.md`, skills, hooks)—không phải động cơ (source nghiệp vụ) |
+| **Agent-Kit** | Bộ lắp giá phụ tùng—đưa methodology skills / hook templates vào Cursor, Claude Code, Codex, v.v. |
+| **public trusted suite** | `bash tools/harness/test-harness.sh`—bài chạy dyno trước khi xưởng xuất bất cứ thứ gì (cùng hệ thống với L2 CI) |
+
+## Làn nhanh nhất: tiếp nhận bằng một dòng
+
+Một lệnh lo toàn bộ: clone xưởng, kéo submodules, cài git hooks, đưa Agent-Kit lên giá, rồi chạy thẳng lên dyno (public trusted suite).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-Nếu shell của bạn không hỗ trợ process substitution, hãy dùng dạng pipe tương đương:
+Hơi cầu kỳ? Pipe kiểu cũ vẫn nổ cùng một động cơ:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-Các environment variable tùy chọn là `TARGET_DIR` và `CLIENT`. Đặt `CLIENT` thành `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+Muốn chọn nơi cài và client cần đấu nối? Hãy đặt hai environment variables:
 
-Để dùng phương án thủ công, hoặc theo dõi từng bước thao tác:
+- `TARGET_DIR` — directory đích để cài đặt
+- `CLIENT` — client cần đấu nối: `cursor` / `claude` / `codex` / `codex-native`, hoặc `skip` để dành Agent-Kit cho lần sau
+
+Lệnh một dòng cũng đưa Agent-Kit lên giá và chạy suite giúp bạn—**đa số có thể tắt máy, hết ca ngay tại đây**. Muốn gắn từng món một, hoặc lệnh một dòng chết máy giữa đường? Hãy đi theo làn manual bên dưới.
+
+## Tiếp nhận manual (tự tay lắp ráp)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# If you forgot --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Install L1 safety check (blocks private trees; runs suite when needed)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-Bây giờ bạn phải đang ở trong `los-santos-customs/`, với submodules đã được khởi tạo và git hooks đã được cài. Lộ trình một dòng cũng cài Agent-Kit cho client bạn chọn và chạy public suite. Nếu chọn lộ trình thủ công, hãy tiếp tục đến §2. Hộp số sàn có thêm một bước; đây không phải chuyện hoài cổ.
+Lúc này cửa khoang sửa mới chỉ mở—thùng phụ tùng (Agent-Kit) vẫn nằm dưới sàn. Tiếp tục nào.
 
-## 2. Lắp part (Agent-Kit)
+## Đưa Agent-Kit lên giá (treo thùng phụ tùng lên tường)
 
-Agent-Kit cài skills và hooks của xưởng này vào editor hoặc CLI của bạn. Một bản cài cơ bản cung cấp các mặc định được tuyển chọn sau:
+Agent-Kit đưa methodology skills và hooks của repo này vào editor / CLI của bạn. Bản cài cơ bản cung cấp một bộ mặc định đã tinh chỉnh: methodology cục bộ, các SP skills được tuyển chọn cho verification / TDD / review, Matt library để bạn chủ động gọi, cùng advisory router tần suất thấp.
 
-- methodology cục bộ;
-- các SP skills được tuyển chọn cho verification, TDD và review;
-- Matt library do người dùng gọi;
-- advisory router tần suất thấp.
-
-Agent-Kit không cài bootstrap `using-superpowers` / `brainstorming` hay vendor hooks. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) là output cài đặt và không được commit. Hãy tạo lại bằng install; file được generate không cần làm lại thân vỏ.
+Nó **không** lén đưa vào bootstrap `using-superpowers` / `brainstorming`, cũng không đụng đến vendor hooks—những thứ đó chỉ được cài khi bạn chủ động chọn. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) là **output cài đặt và không bao giờ được commit**: luôn tạo lại bằng install, đừng sửa tay rồi lén đưa ngược vào git.
 
 ```bash
-# Install for a specific client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Validate the parts are seated
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Preview install (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Tham số | Giá trị |
-|-----------|--------|
+|---------|---------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (tùy chọn) | `lean`, `guided`, `structured`; chỉ điều chỉnh mật độ advisory |
+| `--process-scaffold` (tùy chọn) | `lean`, `guided`, `structured`; chỉ thay đổi mật độ advisory prompts—**không bao giờ** đụng đến enforcement |
+
+Bootstrap cục bộ phổ biến nhất—đưa cả bốn client lên giá cùng lúc:
 
 ```bash
-# Install all four clients (common local bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Inspect or adjust the repo profile (agents write via CLI only)
+Repo profile luôn phải đi qua CLI (sửa YAML bằng tay là tự mời rắc rối vào xưởng). Để mang thiết lập sang repo khác, hãy export trước rồi check:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Export a portable profile into a subject; wire fragments, then check
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` chỉ còn là đường dẫn tương thích full-plugin tường minh cho các workflow cũ. Đây không còn là đường dẫn cài đặt được khuyến nghị. Quá trình materialization library mặc định không sao chép vendor plugins, hooks hay skills ngoài allowlist; giá part có danh mục là có lý do.
+`PLUGIN` chỉ còn là lối tương thích full-plugin tường minh cho các workflows cũ—không còn là đường cài đặt được khuyến nghị. Default library materialization sẽ không sao chép vendor plugins, hooks hay bất kỳ skill nào ngoài allowlist.
 
-## 3. (Tùy chọn) Đưa xe của bạn vào xưởng
+## Lái xe của bạn vào xưởng (tùy chọn: đấu nối subject)
 
-Một public clone có thể chạy public trusted suite mà không cần repo sản phẩm riêng tư nào. Chỉ kết nối xe của khách hàng với khoang sửa chữa cục bộ khi bạn cần sync, import hoặc compare một subject thật:
+Chỉ muốn kiểm tra xưởng có xanh toàn bộ không? **Đừng đấu nối gì cả**—public clone không phụ thuộc vào repo sản phẩm riêng tư nào mà vẫn chạy trusted suite đến khi cả bảng xanh rì.
+
+Chỉ khi thực sự muốn sync / import / compare một subject thật, bạn mới cần chạy:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edit remotes to repos you can access, then:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-Thứ tự rất quan trọng:
+Chỉ cần nhớ đúng một thứ tự: **tạo `manifest.yaml` → sync → dùng `--pin` ghi version trở lại → chạy `check-local-absorb.sh` cho đến khi đạt `harness-ready`**. Vượt gate này trước; chỉ sau đó import / compare / score mới được phép chạy.
 
-1. Tạo `subjects/manifest.yaml` từ file mẫu. Trỏ remotes đến các repo mà bạn có quyền truy cập.
-2. Chạy sync để fetch harness surface của từng subject.
-3. Dùng `<id> --pin` để ghi lại chính xác revision bạn định đánh giá.
-4. Chạy local absorb check. Subject vượt qua sẽ là `harness-ready`; chỉ khi đó import, compare và score mới có thể tạo kết quả đáng tin cậy.
+Các mục sau luôn ở cục bộ và đã được gitignore. Đừng cố nhồi chúng vào commit; pre-commit hook sẽ chặn ngay tại cửa:
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/` và `comparisons/` là xe của khách hàng và work order. Chúng luôn ở cục bộ, bị gitignore và không bao giờ vào showroom công khai. Đây không phải là che giấu; đây là kiểm soát khóa cơ bản.
+- `subjects/manifest.yaml`
+- `pin.json` và `checkout/` của từng subject
+- `snapshots/`, `comparisons/`
 
 ---
 
-Giờ chiếc xe đã tự chạy bằng động lực của mình. Phần còn lại là tài liệu tham khảo cho khoang dịch vụ.
+Bên dưới là bức tường tra cứu dùng hằng ngày. Cần dụng cụ nào thì lấy dụng cụ đó; không cần đọc hết trong một lượt.
 
-## Lệnh thường dùng
+## Lệnh thường dùng (tường dụng cụ)
 
-| Mục đích | Lệnh |
-|---------|---------|
-| Public trusted suite (khép vòng lặp / CI) | `bash tools/harness/test-harness.sh` |
+| Việc bạn muốn làm | Dòng lệnh cần chạy |
+|-------------------|--------------------|
+| Public trusted suite (dyno / theo cấu trúc CI) | `bash tools/harness/test-harness.sh` |
 | Xác thực Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
 | Sync harness surface | `bash tools/sync/sync-subjects.sh` |
 | Ghi lại pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
-| Mức sẵn sàng absorb cục bộ | `bash tools/harness/check-local-absorb.sh --all` |
+| Kiểm tra mức sẵn sàng local absorb | `bash tools/harness/check-local-absorb.sh --all` |
 | Import snapshot | `python3 tools/import/import_subject.py --all` |
-| Báo cáo compare | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
-| Score | `python3 tools/score/score_subject.py <id>` |
-| Báo cáo hằng tuần | `python3 tools/harness/weekly_report.py` |
+| Tạo compare report | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
+| Chạy score | `python3 tools/score/score_subject.py <id>` |
+| Tạo báo cáo hằng tuần | `python3 tools/harness/weekly_report.py` |
 
-## Bố cục
+## Sơ đồ xưởng (từng bộ phận nằm ở đâu)
 
-| Path | Vai trò | Trong git? |
-|------|------|---------|
+| Path | Đây là gì | Trong git? |
+|------|-----------|------------|
 | `agent-kit/skills` | Methodology mở (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | Template hooks/settings cho client | ✓ |
+| `agent-kit/hooks/clients/` | Hooks / settings templates theo từng client | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Output cài đặt | ✗ |
 | `subjects/manifest.example.yaml` | Ví dụ registry công khai | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Registry / clone cục bộ | ✗ |
 | `tools/` | sync / import / compare / score / suite / hooks | ✓ |
-| `testdata/` | Fixture công khai (CI) | ✓ |
+| `testdata/` | Fixtures công khai (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Sản phẩm absorb | ✗ |
 | `docs/harness/` | Design + ledgers | một phần |
-| `AGENTS.md` | SSOT của constraint (`CLAUDE.md` → file này) | ✓ |
+| `AGENTS.md` | SSOT của constraints (`CLAUDE.md` trỏ về đây) | ✓ |
 
-## Tài liệu
+## Giá hướng dẫn (đọc sâu hơn)
 
 - [`docs/README.md`](../README.md) — quy tắc đặt tài liệu
 - [`docs/harness/design.md`](../harness/design.md) — design harness của repo này
@@ -172,4 +184,4 @@ Giờ chiếc xe đã tự chạy bằng động lực của mình. Phần còn 
 
 ## Giấy phép
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — cứ lái xe khỏi xưởng theo cách bạn muốn; giấy tờ ở ngay đây.

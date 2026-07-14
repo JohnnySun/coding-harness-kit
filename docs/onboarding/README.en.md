@@ -23,122 +23,134 @@
   <a href="README.uk.md">Українська</a>
 </h3>
 
-> **This shop works on your car: the coding harness.** It is the AI-development guardrail layer around a product repo. That product repo—the subject—owns the car; its business source is the engine, and we leave the engine closed.
-> The short route: run the one-line intake → install Agent-Kit for Cursor, Claude Code, or Codex → optionally connect a real subject, then sync, pin, and check `harness-ready`. New parts still go on the dyno. Paint inspection is not a test plan.
+> **In one line:** This is a chop shop for your repo's *guardrails*. What goes up on the lift isn't your business code — it's the **coding harness** wrapped around it: the layer that keeps an AI (Cursor, Claude Code, Codex) from cutting corners, faking "done," or shoving things that shouldn't be committed into git.
+>
+> **What's in it for you:** Either drive with our tuned methodology skills and idiot-proof hooks as-is, or bolt the same guardrails onto your own repos. We don't touch the engine (your business source) — we just weld the outer roll cage until an AI can't casually crumple it.
+>
+> **Three gears to get rolling:** one-line install → (ignition) rack Agent-Kit → (optional) drive your own subject in. Before you clock out, hit `bash tools/harness/test-harness.sh` — dashboard all green means it passed inspection and it's street-legal.
 
-| Term | Meaning (shop mapping) |
-|------|---------|
-| **coding harness** | Your car: the AI-dev guardrail layer around a product repo (rules, skills, hooks, trusted suite, ledgers) |
-| **subject** | The product repo that owns the car (local clone; not committed here) |
-| **harness surface** | The parts bay: `AGENTS.md`, skills, hooks, and similar guardrail files; not business source |
-| **Agent-Kit** | Parts rack: materializes methodology skills / hook templates into Cursor, Claude Code, Codex, etc. |
-| **public trusted suite** | Dyno: `bash tools/harness/test-harness.sh` (same as L2 CI) |
+## Glossary (shop slang)
 
-## 1. Intake (initialize)
+You'll see these words everywhere below. Learn them once here; the rest of the doc just uses them.
 
-The fastest bay is the one-line installer. It clones the repo, initializes submodules, installs git hooks and Agent-Kit, then runs the public trusted suite:
+| Slang | Plain English |
+|-------|---------------|
+| **coding harness** | The "car" we actually wrench on — the whole AI-dev guardrail layer around a product repo: rules, skills, hooks, trusted suite, ledgers |
+| **subject** | A product repo driven onto the bay to be absorbed / compared; cloned locally only, **never** committed here |
+| **harness surface** | The mod panels on that car (`AGENTS.md`, skills, hooks) — not the engine (business source) |
+| **Agent-Kit** | The rack-it installer — drops methodology skills / hook templates into Cursor, Claude Code, Codex, etc. |
+| **public trusted suite** | `bash tools/harness/test-harness.sh` — the dyno run before this shop ships anything (same rig as L2 CI) |
+
+## Fastest lane: one-line intake
+
+One command does the whole job: clone the shop, pull submodules, install git hooks, rack Agent-Kit, then run it straight onto the dyno (the public trusted suite).
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-If your shell does not support process substitution, use the equivalent pipe form:
+Too fancy? The old-school pipe cranks the same engine:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-Optional environment variables are `TARGET_DIR` and `CLIENT`. Set `CLIENT` to `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+Want to pick where it lands and who it wires up? Set these two env vars:
 
-For a manual fallback, or to watch each wrench turn:
+- `TARGET_DIR` — which directory to install into
+- `CLIENT` — which client to wire: `cursor` / `claude` / `codex` / `codex-native`, or `skip` to leave Agent-Kit for later
+
+The one-liner also racks Agent-Kit and runs the suite for you — **most people cut the engine and clock out right here**. Want to bolt on one gear at a time, or did the one-liner stall mid-run? Take the manual lane below.
+
+## Manual intake (bolt it on yourself)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# If you forgot --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Install L1 safety check (blocks private trees; runs suite when needed)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-You should now be inside `los-santos-customs/` with initialized submodules and installed git hooks. The one-line route also installs Agent-Kit for your selected client and runs the public suite. If you took the manual route, continue to §2. Manual transmissions have one extra step; this one is not nostalgic.
+At this point the bay door is just open — the parts crate (Agent-Kit) is still sitting on the floor. Keep going.
 
-## 2. Bolt on parts (Agent-Kit)
+## Rack Agent-Kit (parts crate onto the wall)
 
-Agent-Kit installs this shop's skills and hooks into your editor or CLI. A bare install provides these opinionated defaults:
+Agent-Kit drops this repo's methodology skills and hooks into your editor / CLI. A bare install hands you a tuned default set: local methodology, a curated pick of SP verification / TDD / review skills, a Matt library you call on purpose, plus a low-frequency advisory router.
 
-- local methodology;
-- curated SP verification, TDD, and review skills;
-- a user-invoked Matt library;
-- a low-frequency advisory router.
-
-It does not install the `using-superpowers` / `brainstorming` bootstrap or vendor hooks. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) are install outputs and are not committed. Regenerate them with install; generated files do not need bodywork.
+It does **not** sneak in `using-superpowers` / `brainstorming` bootstrap, and it leaves vendor hooks alone — those are opt-in only. Client trees (`.cursor` / `.claude` / `.codex` / `.agents`) are **install outputs and never committed**: always regenerate via install rather than hand-editing them and smuggling them back into git.
 
 ```bash
-# Install for a specific client
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Validate the parts are seated
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Preview install (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Parameter | Values |
 |-----------|--------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (optional) | `lean`, `guided`, `structured`; adjusts advisory density only |
+| `--process-scaffold` (optional) | `lean`, `guided`, `structured`; advisory prompt density only — **never** touches enforcement |
+
+The most common local bootstrap — rack all four clients at once:
 
 ```bash
-# Install all four clients (common local bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Inspect or adjust the repo profile (agents write via CLI only)
+The repo profile always goes through the CLI (don't hand-edit the YAML — that's asking for trouble). To carry the setup into another repo, export first, then check:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Export a portable profile into a subject; wire fragments, then check
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` remains only as an explicit full-plugin compatibility path for older workflows. It is no longer the recommended installation path. Default library materialization does not copy vendor plugins, hooks, or skills outside the allowlist; the parts rack has an inventory for a reason.
+`PLUGIN` only survives as an explicit full-plugin compatibility hatch for older workflows — it's no longer the recommended path. Default library materialization won't copy vendor plugins, hooks, or any skill outside the allowlist.
 
-## 3. (Optional) Drive your own car in
+## Drive your own car in (optional: wire up a subject)
 
-A public clone can run the public trusted suite without any private product repos. Connect a customer car to your local bay only when you need to sync, import, or compare a real subject:
+Just want to confirm the shop runs all green? **Wire up nothing** — a public clone leans on zero private product repos and still runs the trusted suite to a wall of green.
+
+Only when you actually want to sync / import / compare a real subject do you run this line:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Edit remotes to repos you can access, then:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # local harness-ready (not the public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-Order matters:
+Memorize one order: **create `manifest.yaml` → sync → `--pin` to write the version back → `check-local-absorb.sh` until `harness-ready`**. Clear that gate first; only then do import / compare / score get to run.
 
-1. Create `subjects/manifest.yaml` from the example. Point its remotes at repos you can access.
-2. Run sync to fetch each subject's harness surface.
-3. Use `<id> --pin` to record the exact revision you intend to evaluate.
-4. Run the local absorb check. A passing subject is `harness-ready`; only then can import, compare, and score produce trustworthy results.
+These stay local and are already gitignored — don't fight to force them into a commit; the pre-commit hook will bounce them on the spot anyway:
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/`, and `comparisons/` are customer cars and work orders. They remain local, are gitignored, and never enter the public showroom. That is not secrecy; it is basic key control.
+- `subjects/manifest.yaml`
+- each subject's `pin.json` and `checkout/`
+- `snapshots/`, `comparisons/`
 
 ---
 
-The car now moves under its own power. The rest is service-bay reference.
+Below is the daily reference wall — pull a tool when you need it, no need to read it all at once.
 
-## Common commands
+## Common commands (tool wall)
 
-| Purpose | Command |
-|---------|---------|
-| Public trusted suite (close the loop / CI) | `bash tools/harness/test-harness.sh` |
+| What you want | The line to run |
+|---------------|-----------------|
+| Public trusted suite (dyno / CI-shaped) | `bash tools/harness/test-harness.sh` |
 | Validate Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
 | Sync harness surface | `bash tools/sync/sync-subjects.sh` |
 | Rewrite pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
@@ -148,12 +160,12 @@ The car now moves under its own power. The rest is service-bay reference.
 | Score | `python3 tools/score/score_subject.py <id>` |
 | Weekly report | `python3 tools/harness/weekly_report.py` |
 
-## Layout
+## Floor plan (where each part lives)
 
-| Path | Role | In git? |
-|------|------|---------|
+| Path | What it is | In git? |
+|------|------------|---------|
 | `agent-kit/skills` | Open methodology (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | Client hooks/settings templates | ✓ |
+| `agent-kit/hooks/clients/` | Per-client hooks / settings templates | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Install outputs | ✗ |
 | `subjects/manifest.example.yaml` | Public registry example | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Local registry / clone | ✗ |
@@ -161,9 +173,9 @@ The car now moves under its own power. The rest is service-bay reference.
 | `testdata/` | Public fixtures (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Absorb products | ✗ |
 | `docs/harness/` | Design + ledgers | partial |
-| `AGENTS.md` | Constraint SSOT (`CLAUDE.md` → it) | ✓ |
+| `AGENTS.md` | Constraint SSOT (`CLAUDE.md` points here) | ✓ |
 
-## Docs
+## Manual shelf (dig deeper)
 
 - [`docs/README.md`](../README.md) — documentation placement rules
 - [`docs/harness/design.md`](../harness/design.md) — this repo's harness design
@@ -172,4 +184,4 @@ The car now moves under its own power. The rest is service-bay reference.
 
 ## License
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — drive it off the lot however you like; the title's right here.

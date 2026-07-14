@@ -23,147 +23,159 @@
   <strong>Українська</strong>
 </h3>
 
-> **Ця майстерня працює з вашим автомобілем — coding harness.** Це рівень захисних механізмів для розробки з AI навколо репозиторію продукту. Репозиторій продукту — subject — володіє автомобілем; бізнес-код є двигуном, і двигун ми не відкриваємо.
-> Короткий маршрут: запустіть установлення однією командою → установіть Agent-Kit для Cursor, Claude Code або Codex → за потреби підключіть реальний subject, а потім виконайте sync, pin і перевірку `harness-ready`. Нові деталі все одно проходять випробування на стенді. Огляд фарби не замінює план тестування.
+> **Одним рядком:** це тюнінг-ательє для *захисних огорож* вашого репозиторію. На підіймач потрапляє не бізнес-код, а **coding harness** навколо нього — шар, що не дає AI (Cursor, Claude Code, Codex) зрізати кути, удавати, ніби «все готово», або пхати в git те, чого там бути не повинно.
+>
+> **Що ви отримуєте:** можете одразу їхати з нашими налаштованими methodology skills і захищеними від дурня hooks або прикрутити такі самі огорожі до власних репозиторіїв. Двигун — ваш бізнес-код — ми не чіпаємо; лише зварюємо зовнішній каркас так міцно, щоб AI не міг ненароком зім'яти кузов.
+>
+> **Три передачі до старту:** встановлення одним рядком → (запалювання) поставити Agent-Kit на стелаж → (необов'язково) загнати власний subject. Перед закриттям зміни запустіть `bash tools/harness/test-harness.sh`: усі індикатори зелені — техогляд пройдено, можна на дорогу.
 
-| Термін | Значення (відповідник у майстерні) |
-|------|---------|
-| **coding harness** | Ваш автомобіль: рівень захисних механізмів для розробки з AI навколо репозиторію продукту (rules, skills, hooks, trusted suite і ledgers) |
-| **subject** | Репозиторій продукту, якому належить автомобіль (локальний clone; тут не комітиться) |
-| **harness surface** | Зона деталей: `AGENTS.md`, skills, hooks і подібні файли захисних механізмів; не бізнес-код |
-| **Agent-Kit** | Стелаж із деталями: матеріалізує методологічні skills і templates hooks у Cursor, Claude Code, Codex тощо |
-| **public trusted suite** | Випробувальний стенд: `bash tools/harness/test-harness.sh` (те саме, що L2 CI) |
+## Словник (жаргон майстерні)
 
-## 1. Приймання (ініціалізація)
+Ці слова траплятимуться нижче всюди. Розберіться з ними тут один раз — далі документ просто ними користується.
 
-Найшвидший в'їзд до майстерні — інсталятор, що запускається однією командою. Він клонує репозиторій, ініціалізує submodules, установлює git hooks і Agent-Kit, а потім запускає public trusted suite:
+| Жаргон | Простими словами |
+|--------|------------------|
+| **coding harness** | «Автомобіль», над яким ми насправді працюємо: увесь шар захисних механізмів AI-розробки навколо продуктового репозиторію — rules, skills, hooks, trusted suite і ledgers |
+| **subject** | Продуктовий репозиторій, загнаний у бокс для absorb / compare; клонується лише локально й **ніколи** тут не комітиться |
+| **harness surface** | Знімні панелі цієї машини (`AGENTS.md`, skills, hooks), а не двигун (бізнес-код) |
+| **Agent-Kit** | Установник стелажа: розміщує methodology skills / hook templates у Cursor, Claude Code, Codex тощо |
+| **public trusted suite** | `bash tools/harness/test-harness.sh` — прогін на стенді перед тим, як майстерня щось випустить (той самий стенд, що й L2 CI) |
+
+## Найшвидша смуга: приймання одним рядком
+
+Одна команда робить усе: клонує майстерню, підтягує submodules, установлює git hooks, ставить Agent-Kit на стелаж і відразу відправляє збірку на стенд — у public trusted suite.
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-Якщо ваш shell не підтримує process substitution, скористайтеся рівноцінною формою з pipe:
+Занадто вигадливо? Старий добрий pipe заводить той самий двигун:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-Необов'язкові змінні середовища: `TARGET_DIR` і `CLIENT`. Установіть `CLIENT` у `cursor` / `claude` / `codex` / `codex-native` / `skip`.
+Хочете вибрати місце встановлення й клієнта? Задайте дві змінні середовища:
 
-Ручний запасний варіант або спосіб простежити за кожним кроком:
+- `TARGET_DIR` — directory для встановлення
+- `CLIENT` — client для підключення: `cursor` / `claude` / `codex` / `codex-native`; або `skip`, щоб відкласти Agent-Kit на потім
+
+Однорядкова команда також ставить Agent-Kit на стелаж і запускає suite — **більшість людей тут глушить двигун і закриває зміну**. Хочете встановлювати по одній деталі чи команда заглухла посеред заїзду? Переходьте на ручну смугу.
+
+## Ручне приймання (установіть самі)
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# Якщо ви забули --recurse-submodules
+# Forgot --recurse-submodules? Grab the missing parts:
 git submodule update --init --recursive
 
-# Установіть перевірку безпеки L1 (блокує приватні дерева; за потреби запускає suite)
+# Weld on the git pre-commit hook (blocks private trees; runs the suite when needed)
 bash tools/harness/install-git-hooks.sh
 ```
 
-Тепер ви маєте перебувати в `los-santos-customs/` з ініціалізованими submodules та встановленими git hooks. Маршрут однієї команди також установлює Agent-Kit для вибраного клієнта й запускає public suite. Якщо ви обрали ручний шлях, перейдіть до §2. Механічна коробка потребує ще одного кроку; справа тут не в ностальгії.
+Наразі лише відчинилися ворота боксу — ящик із деталями (Agent-Kit) досі стоїть на підлозі. Рушаймо далі.
 
-## 2. Установлення деталей (Agent-Kit)
+## Поставте Agent-Kit на стелаж (ящик із деталями — на стіну)
 
-Agent-Kit установлює skills і hooks цієї майстерні у ваш редактор або CLI. Установлення без додаткових параметрів надає такі продумані стандартні налаштування:
+Agent-Kit установлює methodology skills і hooks цього репозиторію у ваш редактор / CLI. Базове встановлення дає налаштований стандартний комплект: локальну методологію, відібрані SP skills для verification / TDD / review, бібліотеку Matt для свідомого виклику й advisory router із низькою частотою спрацювання.
 
-- локальну методологію;
-- відібрані skills SP для верифікації, TDD і review;
-- бібліотеку Matt, яку викликає користувач;
-- рекомендаційний router із низькою частотою спрацювання.
-
-Він не встановлює bootstrap `using-superpowers` / `brainstorming` і hooks постачальників. Дерева клієнтів (`.cursor` / `.claude` / `.codex` / `.agents`) є результатами встановлення й не комітяться. Створюйте їх заново через install; згенерованим файлам кузовний ремонт не потрібен.
+Він **не** протягує нишком bootstrap `using-superpowers` / `brainstorming` і не чіпає vendor hooks — вони лише за явним вибором. Дерева клієнтів (`.cursor` / `.claude` / `.codex` / `.agents`) — це **результати встановлення, які ніколи не комітяться**: завжди створюйте їх заново через install, а не редагуйте вручну й не намагайтеся потай повернути в git.
 
 ```bash
-# Установіть для конкретного клієнта
+# Install for one client
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# Перевірте, що деталі встановлені правильно
+# Check the install came out complete
 bash tools/harness/agent-kit.sh validate
 
-# Перегляньте встановлення без змін (dry-run)
+# Preview what it would install, without landing it (dry-run)
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | Параметр | Значення |
-|-----------|--------|
+|----------|----------|
 | `CLIENT` | `cursor`, `cursor-cli`, `claude`, `codex`, `codex-native` |
-| `--process-scaffold` (необов'язково) | `lean`, `guided`, `structured`; змінює лише щільність рекомендацій |
+| `--process-scaffold` (необов'язково) | `lean`, `guided`, `structured`; лише щільність advisory prompts — **ніколи** не змінює enforcement |
+
+Найпоширеніший локальний bootstrap — поставити всі чотири клієнти одночасно:
 
 ```bash
-# Установіть усі чотири клієнти (звичайний локальний bootstrap)
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# Перегляньте або налаштуйте profile репозиторію (agents записують лише через CLI)
+Profile репозиторію завжди налаштовується через CLI (редагувати YAML вручну — запрошувати халепу). Щоб перенести налаштування в інший репозиторій, спочатку export, потім check:
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# Експортуйте переносний profile у subject; підключіть fragments, а потім перевірте
+# Export a portable profile into a subject; wire the fragments, then check again
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` залишається лише явним шляхом сумісності з повним plugin для старих workflows. Це більше не рекомендований спосіб установлення. Стандартна матеріалізація бібліотеки не копіює plugins, hooks або skills постачальників поза allowlist; стелаж із деталями недарма має інвентарний список.
+`PLUGIN` залишається лише явним повним plugin-шляхом сумісності для старих workflows — це більше не рекомендований маршрут. Стандартна materialization бібліотеки не копіює vendor plugins, hooks або skills поза allowlist.
 
-## 3. (Необов'язково) Приженіть власний автомобіль
+## Заганяйте власну машину (необов'язково: підключіть subject)
 
-Публічний clone може запускати public trusted suite без приватних репозиторіїв продуктів. Підключайте автомобіль клієнта до локальної майстерні лише тоді, коли потрібно виконати sync, import або compare реального subject:
+Хочете лише переконатися, що в майстерні все зелене? **Нічого не підключайте**: public clone не залежить від приватних продуктових репозиторіїв і все одно проганяє trusted suite до суцільної зелені.
+
+Лише коли справді потрібно виконати sync / import / compare реального subject, запускайте:
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# Укажіть у remotes репозиторії, до яких маєте доступ, а потім:
+# Point the remotes at repos you can access, then:
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # локальний harness-ready (не public suite)
+bash tools/harness/check-local-absorb.sh --all   # local harness-ready (note: NOT the public suite)
 ```
 
-Порядок важливий:
+Запам'ятайте один порядок: **створити `manifest.yaml` → sync → записати версію через `--pin` → запускати `check-local-absorb.sh`, доки не буде `harness-ready`**. Спочатку пройдіть цей gate; лише після цього дозволено import / compare / score.
 
-1. Створіть `subjects/manifest.yaml` із прикладу. Спрямуйте його remotes на репозиторії, до яких маєте доступ.
-2. Запустіть sync, щоб отримати harness surface кожного subject.
-3. Використайте `<id> --pin`, щоб зафіксувати точну ревізію для оцінювання.
-4. Запустіть локальну перевірку absorb. Subject, який її пройшов, має статус `harness-ready`; лише після цього import, compare і score можуть давати надійні результати.
+Усе перелічене залишається локальним і вже додане до gitignore. Не намагайтеся силоміць протягти це в commit: pre-commit hook одразу розверне вас біля воріт.
 
-`subjects/manifest.yaml`, `pin.json`, `checkout/`, `snapshots/` і `comparisons/` — це автомобілі клієнтів і замовлення на роботи. Вони залишаються локальними, ігноруються git і ніколи не потрапляють до публічного салону. Це не секретність, а базовий контроль ключів.
+- `subjects/manifest.yaml`
+- `pin.json` і `checkout/` кожного subject
+- `snapshots/`, `comparisons/`
 
 ---
 
-Тепер автомобіль рухається власним ходом. Нижче наведено довідкові матеріали майстерні.
+Нижче — щоденна довідкова стіна майстерні. Беріть потрібний інструмент; читати все за раз не потрібно.
 
-## Часті команди
+## Часті команди (стіна інструментів)
 
-| Призначення | Команда |
-|---------|---------|
-| Public trusted suite (замикання циклу / CI) | `bash tools/harness/test-harness.sh` |
-| Валідація Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
-| Sync harness surface | `bash tools/sync/sync-subjects.sh` |
-| Перезапис pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
-| Локальна готовність absorb | `bash tools/harness/check-local-absorb.sh --all` |
-| Import snapshot | `python3 tools/import/import_subject.py --all` |
-| Звіт compare | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
-| Score | `python3 tools/score/score_subject.py <id>` |
-| Щотижневий звіт | `python3 tools/harness/weekly_report.py` |
+| Що вам потрібно | Що запустити |
+|-----------------|--------------|
+| Public trusted suite (стенд / форма CI) | `bash tools/harness/test-harness.sh` |
+| Перевірити Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
+| Виконати sync harness surface | `bash tools/sync/sync-subjects.sh` |
+| Перезаписати pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
+| Перевірити готовність local absorb | `bash tools/harness/check-local-absorb.sh --all` |
+| Імпортувати snapshot | `python3 tools/import/import_subject.py --all` |
+| Створити compare report | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
+| Виконати score | `python3 tools/score/score_subject.py <id>` |
+| Створити щотижневий звіт | `python3 tools/harness/weekly_report.py` |
 
-## Структура
+## План майстерні (де лежать деталі)
 
-| Шлях | Роль | У git? |
-|------|------|---------|
+| Шлях | Що це | У git? |
+|------|--------|--------|
 | `agent-kit/skills` | Відкрита методологія (submodule → JohnnySun/skills) | ✓ |
-| `agent-kit/hooks/clients/` | Templates hooks/settings клієнтів | ✓ |
+| `agent-kit/hooks/clients/` | Шаблони hooks / settings для кожного клієнта | ✓ |
 | `.cursor` / `.agents` / `.claude` / `.codex` | Результати встановлення | ✗ |
-| `subjects/manifest.example.yaml` | Приклад публічного registry | ✓ |
+| `subjects/manifest.example.yaml` | Публічний приклад registry | ✓ |
 | `subjects/manifest.yaml` + `<id>/{pin,checkout}` | Локальний registry / clone | ✗ |
 | `tools/` | sync / import / compare / score / suite / hooks | ✓ |
 | `testdata/` | Публічні fixtures (CI) | ✓ |
 | `snapshots/` / `comparisons/` | Результати absorb | ✗ |
 | `docs/harness/` | Design + ledgers | частково |
-| `AGENTS.md` | SSOT обмежень (`CLAUDE.md` → цей файл) | ✓ |
+| `AGENTS.md` | SSOT обмежень (`CLAUDE.md` вказує сюди) | ✓ |
 
-## Документація
+## Полиця посібників (докладніше)
 
 - [`docs/README.md`](../README.md) — правила розміщення документації
 - [`docs/harness/design.md`](../harness/design.md) — design harness цього репозиторію
@@ -172,4 +184,4 @@ bash tools/harness/check-local-absorb.sh --all   # локальний harness-re
 
 ## Ліцензія
 
-[MIT](../../LICENSE)
+[MIT](../../LICENSE) — забирайте авто із салону й кермуйте як заманеться: документи вже тут.

@@ -23,153 +23,165 @@
   <a href="docs/onboarding/README.uk.md">Українська</a>
 </h3>
 
-> **這間改裝廠改的是你的車：coding harness。** 它是包在產品倉外面的 AI 開發防護層；產品倉（subject）擁有這台車，業務源碼是引擎，本廠不拆。
-> 最短路線：執行一鍵安裝 → 為 Cursor／Claude Code／Codex 裝 Agent-Kit →（可選）接上真實 subject，依序 sync、pin、檢查 `harness-ready`。零件裝完要上測功機，不能只看烤漆。
+> **一句話：** 這是一間專門幫你的程式碼倉「改裝防護」的改車廠。真正上舉升機的不是你的業務程式碼，而是包在它外面那層 **coding harness**——讓 AI（Cursor／Claude Code／Codex）幫你寫程式時，不會偷工減料、不會謊報完工、不會把不該提交的東西塞進 git。
+>
+> **跟你什麼關係：** 你要嘛直接用我們調校好的方法論 skills 與防呆 hooks，要嘛把同一套護欄搬到你自己的倉上。引擎（業務源碼）我們一根螺絲都不碰，只把外圈的鋼骨焊到 AI 撞不壞。
+>
+> **怎麼進廠（三檔）：** 一鍵安裝 →（引擎點火）上架 Agent-Kit →（選配）把你自己的車開進來。收工前踩一腳 `bash tools/harness/test-harness.sh`，儀表板全綠＝驗車通過、可以上路。
 
-| 術語 | 含義（改裝廠對照） |
+## 術語表（進廠先學黑話）
+
+這幾個詞後面到處都會用，先在這裡認一次，之後不再重複解釋。
+
+| 黑話 | 白話 |
 |------|------|
-| **coding harness** | 你的「車」：包在業務倉外層的 AI 開發防護體系（規則、skills、hooks、可信集、帳本） |
-| **subject** | 擁有這台車的產品／業務倉（本機 clone，不進本倉 git） |
-| **harness 表面** | 零件安裝面：`AGENTS.md`、skills、hooks 等；業務源碼不在工單內 |
-| **Agent-Kit** | 零件架：把方法論 skills / hooks 模板裝進 Cursor、Claude Code、Codex 等客戶端 |
-| **公開可信集** | 測功機：`bash tools/harness/test-harness.sh`（與 L2 CI 同構） |
+| **coding harness** | 廠裡真正動手改的那台「車」——包在業務倉外的一整套 AI 開發護欄：規則、skills、hooks、可信集、帳本 |
+| **subject** | 一輛開進廠裡被吸收／比較的業務倉；只在你本機 clone，**不會**跟著本倉進 git |
+| **harness 表面** | 車身上跟改裝有關的那些面板（`AGENTS.md`、skills、hooks）；不是引擎本體（業務源碼） |
+| **Agent-Kit** | 零件箱上架器——把方法論 skills／hooks 模板裝進 Cursor、Claude Code、Codex 等客戶端 |
+| **公開可信集** | `bash tools/harness/test-harness.sh`——出廠前的測功機（dyno），跟線上 L2 CI 同一套 |
 
-## 1. 進廠（初始化）
+## 一鍵進廠（最快路線）
 
-最快的工位是一鍵安裝。它會完成 clone、submodule、git hooks、Agent-Kit，並跑公開可信集：
+一行指令包全套：克隆本廠、拉齊 submodule、裝好 git hooks、上架 Agent-Kit，最後直接推上測功機跑一圈公開可信集。
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh)
 ```
 
-若你的 shell 不接受 process substitution，改用等價的 pipe 寫法：
+嫌上面那寫法花俏？老派管道也一樣能開：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JohnnySun/los-santos-customs/main/scripts/install.sh | bash
 ```
 
-可選環境變數是 `TARGET_DIR` 與 `CLIENT`。`CLIENT` 可設為 `cursor` / `claude` / `codex` / `codex-native` / `skip`。
+想指定一下裝哪、配誰，補這兩個環境變數：
 
-想逐項看技師動手，或一鍵安裝不適用時，手動執行：
+- `TARGET_DIR` — 裝進哪個目錄
+- `CLIENT` — 配哪台客戶端：`cursor`／`claude`／`codex`／`codex-native`，或填 `skip` 這趟先不碰 Agent-Kit
+
+一鍵路線會順手把 Agent-Kit 也裝好、可信集也跑完——**多數人到這裡就能熄火收工**。想自己一檔一檔慢慢掛，或者一鍵跑到一半斷線了，往下走手動路線。
+
+## 手動進廠（自己拆步驟）
 
 ```bash
 git clone --recurse-submodules https://github.com/JohnnySun/los-santos-customs.git
 cd los-santos-customs
 
-# 若克隆時漏了 --recurse-submodules
+# 克隆時忘了 --recurse-submodules？補這一句把零件補齊
 git submodule update --init --recursive
 
-# 裝 L1 安檢（拒收私有樹、必要時跑可信集）
+# 焊上 git pre-commit hook：擋住私有樹誤闖 git，必要時順手踩一腳可信集
 bash tools/harness/install-git-hooks.sh
 ```
 
-完成後，你應該位於 `los-santos-customs/`，submodule 已初始化，git hooks 已安裝。一鍵路線還會替所選客戶端裝好 Agent-Kit 並跑公開可信集；手動路線請繼續 §2。手排車多一個步驟，這次不是情懷。
+跑到這裡只是**廠房鐵門拉開了**——零件箱（Agent-Kit）還晾在旁邊沒上架。接著下一節。
 
-## 2. 裝零件（Agent-Kit）
+## 上架 Agent-Kit（把零件箱裝進工具牆）
 
-Agent-Kit 把本廠的 skills 與 hooks 裝進編輯器／CLI。裸 install 會裝這套有主見的預設：
+Agent-Kit 負責把本倉的方法論 skills 與 hooks 塞進你的編輯器／CLI。裸裝一次就給你一套調校好的預設：本地方法論、精挑過的 SP 驗證／TDD／review skills、需要時你再親自呼叫的 Matt library，外加一個低頻的 advisory router。
 
-- 本地方法論；
-- 精選 SP 驗證／TDD／review skills；
-- 由使用者主動呼叫的 Matt library；
-- 低頻 advisory router。
-
-它不安裝 `using-superpowers`／`brainstorming` bootstrap 或 vendor hooks。客戶端目錄（`.cursor` / `.claude` / `.codex` / `.agents`）是安裝產物，不進 git；壞了就重新 install，不必替生成檔做鈑金。
+它**不會**擅自塞 `using-superpowers`／`brainstorming` 那類 bootstrap，也不亂動 vendor hooks——那些得你自己點名才裝。客戶端目錄（`.cursor`／`.claude`／`.codex`／`.agents`）都是**安裝產物、不進 git**：永遠靠 install 重新生成，別手改完偷偷塞回倉裡。
 
 ```bash
-# 裝到指定客戶端
+# 裝給某一台客戶端
 CLIENT=<client> bash tools/harness/agent-kit.sh install
 
-# 校驗零件是否裝齊
+# 驗一下裝出來的配置齊不齊
 bash tools/harness/agent-kit.sh validate
 
-# 預覽（dry-run）
+# 只想看看會裝哪些、先不落地（dry-run）
 CLIENT=<client> DRY_RUN=1 bash tools/harness/agent-kit.sh install
 ```
 
 | 參數 | 可選值 |
 |------|--------|
 | `CLIENT` | `cursor`、`cursor-cli`、`claude`、`codex`、`codex-native` |
-| `--process-scaffold`（可選） | `lean`、`guided`、`structured`；只調 advisory 密度 |
+| `--process-scaffold`（可選） | `lean`、`guided`、`structured`；只調 advisory 提示的密度，**不動** enforcement 強度 |
+
+本機起步最常見的做法——四台客戶端一次全上：
 
 ```bash
-# 四個客戶端都裝一遍（常見本機起步）
 for c in cursor claude codex codex-native; do
   CLIENT=$c bash tools/harness/agent-kit.sh install
 done
+```
 
-# 查看或調整 repo profile（Agent 一律經 CLI 寫入）
+repo 的 profile 一律走 CLI 讀寫（別手動去編 YAML，那是自找麻煩）。要把這套設定帶去別的倉，先 export、再 check：
+
+```bash
 bash tools/harness/agent-kit.sh profile show
 bash tools/harness/agent-kit.sh profile set process_scaffold guided
 
-# 輸出可攜 profile 到 subject；依 fragment 接線後檢查
+# 把可攜 profile 匯出到某輛 subject；接好 fragment 後再回頭驗一次
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
 
-`PLUGIN` 只保留作舊流程的顯式完整插件相容入口，不再是推薦安裝方式。預設 library materialization 不會複製 vendor plugin、hooks 或未列入 allowlist 的 skill；零件架有清單，不靠地上那盒「可能用得到」。
+`PLUGIN` 只是留給舊流程的「整組插件」相容入口，早就不是推薦裝法了。預設 library 落地時不會複製 vendor plugin、hooks，或任何沒進 allowlist 的 skill。
 
-## 3. （可選）把自己的車開進來
+## 把自己的車開進來（選配：接一輛 subject）
 
-公開 clone 不需要任何私有業務倉，也能把公開可信集跑綠。只有要 sync / import / compare 真實 subject 時，才把客戶的車接進本機工位：
+只是想確認本廠能不能跑出全綠？那你**什麼都不用接**——公開 clone 不依賴任何私有業務倉，光憑本體就能把可信集跑成滿江綠。
+
+真的要 sync／import／compare 一輛實際的 subject，才需要走這道工序：
 
 ```bash
 cp subjects/manifest.example.yaml subjects/manifest.yaml
-# 編輯 remotes 為你有權限的倉庫，再：
+# 把 remotes 改成你有權限的倉庫，然後：
 bash tools/sync/sync-subjects.sh
 bash tools/sync/sync-subjects.sh <id> --pin
-bash tools/harness/check-local-absorb.sh --all   # 本機 harness-ready（非公開套件）
+bash tools/harness/check-local-absorb.sh --all   # 本機 harness-ready（注意：這不是公開可信集）
 ```
 
-順序很重要：
+順序背一條口訣就好：**建 `manifest.yaml` → sync → `--pin` 寫回版本 → `check-local-absorb.sh` 確認 `harness-ready`**；過了這關，才輪到 import／compare／score 上場。
 
-1. 從範本建立 `subjects/manifest.yaml`，把 remotes 改成你有權限存取的倉庫。
-2. 執行 sync，取得 subject 的 harness 表面。
-3. 用 `<id> --pin` 記錄要評估的確切版本。
-4. 跑本機 absorb 檢查；通過才是 `harness-ready`，之後才能可靠地 import、compare、score。
+下面這些都是本機私有、早被 `.gitignore` 擋在 git 門外——別費勁往提交裡塞，pre-commit hook 也會當場攔下來：
 
-`subjects/manifest.yaml`、`pin.json`、`checkout/`、`snapshots/`、`comparisons/` 都是客戶車輛與工單資料：只留本機，已被 `.gitignore` 擋住，不會停進公開展廳。這不是神祕，是基本的鑰匙管理。
+- `subjects/manifest.yaml`
+- 各 subject 的 `pin.json` 與 `checkout/`
+- `snapshots/`、`comparisons/`
 
 ---
 
-新車已會走了。以下是日常保養資料，按需查閱。
+以下是日常參考區，需要時再翻，不用一口氣讀完。
 
-## 常用命令
+## 常用命令（工具牆速查）
 
-| 目的 | 命令 |
+| 想幹嘛 | 敲這行 |
 |------|------|
-| 公開可信集（收環 / CI 同構） | `bash tools/harness/test-harness.sh` |
+| 跑公開可信集（測功機／CI 同構） | `bash tools/harness/test-harness.sh` |
 | 校驗 Agent-Kit | `bash tools/harness/agent-kit.sh validate` |
 | 同步 harness 表面 | `bash tools/sync/sync-subjects.sh` |
 | 寫回 pin | `bash tools/sync/sync-subjects.sh <id> --pin` |
-| 本機 absorb 就緒 | `bash tools/harness/check-local-absorb.sh --all` |
+| 檢查本機 absorb 就緒 | `bash tools/harness/check-local-absorb.sh --all` |
 | 導入 snapshot | `python3 tools/import/import_subject.py --all` |
-| 比較報告 | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
+| 產出比較報告 | `python3 tools/compare/compare_subjects.py -o comparisons/report.md` |
 | 評分 | `python3 tools/score/score_subject.py <id>` |
 | 週報 | `python3 tools/harness/weekly_report.py` |
 
-## 倉庫佈局
+## 廠房平面圖（哪個零件擺在哪）
 
-| 路徑 | 角色 | 進 git？ |
+| 路徑 | 這是啥 | 進 git？ |
 |------|------|----------|
 | `agent-kit/skills` | 開源方法論（submodule → JohnnySun/skills） | ✓ |
-| `agent-kit/hooks/clients/` | 各客戶端 hooks/settings 模板 | ✓ |
-| `.cursor` / `.agents` / `.claude` / `.codex` | install 產物 | ✗ |
+| `agent-kit/hooks/clients/` | 各客戶端的 hooks／settings 模板 | ✓ |
+| `.cursor`／`.agents`／`.claude`／`.codex` | install 產物 | ✗ |
 | `subjects/manifest.example.yaml` | 公開 registry 範本 | ✓ |
-| `subjects/manifest.yaml` + `<id>/{pin,checkout}` | 本機 registry / clone | ✗ |
-| `tools/` | sync / import / compare / score / 可信集 / hooks | ✓ |
+| `subjects/manifest.yaml` + `<id>/{pin,checkout}` | 本機 registry／clone | ✗ |
+| `tools/` | sync／import／compare／score／可信集／hooks | ✓ |
 | `testdata/` | 公開 fixture（CI 用） | ✓ |
 | `snapshots/`、`comparisons/` | 吸收產物 | ✗ |
 | `docs/harness/` | 設計與帳本 | 部分 |
-| `AGENTS.md` | 約束 SSOT（`CLAUDE.md` → 之） | ✓ |
+| `AGENTS.md` | 約束 SSOT（`CLAUDE.md` 指向它） | ✓ |
 
-## 文件
+## 說明書櫃（想深挖再翻）
 
-- [`docs/README.md`](docs/README.md) — 文檔落點約定
-- [`docs/harness/design.md`](docs/harness/design.md) — 本倉 harness 設計
+- [`docs/README.md`](docs/README.md) — 文檔該落在哪的約定
+- [`docs/harness/design.md`](docs/harness/design.md) — 本倉 harness 的設計
 - [`docs/specs/`](docs/specs/) — 設計文檔歸檔
 - [`AGENTS.md`](AGENTS.md) — 完成定義、黑名單、機關落點
 
 ## 授權
 
-[MIT](LICENSE)
+[MIT](LICENSE)——想開走隨你，出廠證明附在這。
