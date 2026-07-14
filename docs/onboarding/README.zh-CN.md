@@ -1,4 +1,4 @@
-# Los Santos Customs
+# 洛圣都改车王（Los Santos Customs）
 
 <h3 align="center">
   <a href="../../README.md">繁體中文</a> |
