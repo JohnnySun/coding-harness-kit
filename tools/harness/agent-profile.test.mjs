@@ -102,24 +102,114 @@ test('set writes canonical repo or local YAML atomically', () => {
   assert.equal(fs.existsSync(path.join(root, '.harness', 'agent-profile.yaml.tmp')), false);
 });
 
-test('export is portable and never overwrites existing client hooks', () => {
+test('export owns prompt-submit wiring and preserves other client hooks', () => {
   const root = tempRoot();
   const hooksPath = path.join(root, '.cursor', 'hooks.json');
   fs.mkdirSync(path.dirname(hooksPath), { recursive: true });
-  fs.writeFileSync(hooksPath, '{"hooks":{"custom":[]}}\n');
+  fs.writeFileSync(
+    hooksPath,
+    JSON.stringify({
+      version: 1,
+      hooks: {
+        beforeShellExecution: [{ command: 'node scripts/harness/gate.mjs' }],
+        beforeSubmitPrompt: [{ command: 'node scripts/harness/prompt-skill-router.mjs' }],
+      },
+    }) + '\n',
+  );
   fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Existing rules\n');
 
   const first = exportProfile({ root, client: 'cursor' });
   const second = exportProfile({ root, client: 'cursor' });
 
-  assert.equal(fs.readFileSync(hooksPath, 'utf8'), '{"hooks":{"custom":[]}}\n');
+  const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+  assert.deepEqual(
+    hooks.hooks.beforeShellExecution,
+    [{ command: 'node scripts/harness/gate.mjs' }],
+  );
+  assert.deepEqual(
+    hooks.hooks.beforeSubmitPrompt,
+    [{ command: 'node .harness/profile-runtime/agent-profile-router.mjs' }],
+  );
   assert.equal(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), '# Existing rules\n');
-  assert.equal(first.hooks_overwritten, false);
-  assert.equal(second.hooks_overwritten, false);
+  assert.equal(first.prompt_hooks_replaced, 1);
+  assert.equal(second.prompt_hooks_replaced, 1);
   assert.ok(fs.existsSync(path.join(root, '.harness', 'profile-runtime', 'agent-profile.mjs')));
   assert.ok(fs.existsSync(path.join(root, '.harness', 'profile-runtime', 'agent-profile-router.mjs')));
   assert.ok(fs.existsSync(path.join(root, '.harness', 'profile-wiring', 'cursor.json')));
+  const wiring = JSON.parse(
+    fs.readFileSync(path.join(root, '.harness', 'profile-wiring', 'cursor.json'), 'utf8'),
+  );
+  assert.equal(wiring.merge_manually, false);
+  assert.equal(wiring.owns_prompt_submit_event, true);
+  assert.equal(wiring.preserves_other_hook_events, true);
+  assert.match(
+    fs.readFileSync(path.join(root, '.harness', 'agent-profile-rules.md'), 'utf8'),
+    /owns the active prompt-submit advisory path/i,
+  );
   assert.match(fs.readFileSync(path.join(root, '.gitignore'), 'utf8'), /agent-profile\.local\.yaml/);
+});
+
+test('export replaces only the Claude prompt-submit advisory path', () => {
+  const root = tempRoot();
+  const settingsPath = path.join(root, '.claude', 'settings.json');
+  fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+  fs.writeFileSync(
+    settingsPath,
+    JSON.stringify({
+      env: { KEEP_ME: '1' },
+      hooks: {
+        SessionStart: [{
+          hooks: [{ type: 'command', command: 'node', args: ['scripts/harness/session-gate.mjs'] }],
+        }],
+        UserPromptSubmit: [{
+          hooks: [{
+            type: 'command',
+            command: 'node',
+            args: ['scripts/harness/legacy-toxic-router.mjs'],
+          }],
+        }],
+      },
+    }) + '\n',
+  );
+
+  const report = exportProfile({ root, client: 'claude' });
+  const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  assert.deepEqual(settings.env, { KEEP_ME: '1' });
+  assert.equal(
+    settings.hooks.SessionStart[0].hooks[0].args[0],
+    'scripts/harness/session-gate.mjs',
+  );
+  assert.deepEqual(settings.hooks.UserPromptSubmit, [{
+    hooks: [{
+      type: 'command',
+      command: 'node',
+      args: ['.harness/profile-runtime/agent-profile-router.mjs'],
+    }],
+  }]);
+  assert.equal(report.prompt_hooks_replaced, 1);
+});
+
+test('profile export produces a wiring-only state that profile check accepts', () => {
+  const root = tempRoot();
+  setProfileValue({ root, key: 'sp_library', value: 'disabled' });
+  setProfileValue({ root, key: 'matt_skills', value: 'disabled' });
+  fs.writeFileSync(
+    path.join(root, 'AGENTS.md'),
+    [
+      '# Agent profile',
+      'Profile routing is lightweight and advisory, not a global process gate.',
+      'Agents change profile settings through `agent-kit.sh profile set`, not direct edits.',
+      '',
+    ].join('\n'),
+  );
+
+  exportProfile({ root, client: 'cursor' });
+  const report = checkProfile({ root, client: 'cursor' });
+  assert.equal(report.ok, true, report.errors.join('; '));
+  const state = JSON.parse(
+    fs.readFileSync(path.join(root, '.harness', 'agent-profile-state.json'), 'utf8'),
+  );
+  assert.equal(state.clients.cursor.materialization, 'profile-export');
 });
 
 test('export requires an explicit subject root', () => {
@@ -136,12 +226,11 @@ test('export requires an explicit subject root', () => {
   }
 });
 
-test('profile check reports missing wiring and accepts complete portable surface', () => {
+test('profile check validates export wiring and full install materialization', () => {
   const root = tempRoot();
   exportProfile({ root, client: 'cursor' });
   let report = checkProfile({ root, client: 'cursor' });
-  assert.equal(report.ok, false);
-  assert.ok(report.errors.some((error) => /wiring/i.test(error)));
+  assert.equal(report.ok, true, report.errors.join('; '));
 
   fs.mkdirSync(path.join(root, '.cursor'), { recursive: true });
   fs.writeFileSync(
@@ -252,6 +341,14 @@ test('profile check reports missing wiring and accepts complete portable surface
 
   report = checkProfile({ root, client: 'cursor' });
   assert.equal(report.ok, true, report.errors.join('; '));
+
+  fs.writeFileSync(
+    path.join(root, '.cursor', 'hooks.json'),
+    '{"hooks":{"beforeSubmitPrompt":[{"command":"node scripts/harness/prompt-skill-router.mjs"}]}}\n',
+  );
+  report = checkProfile({ root, client: 'cursor' });
+  assert.equal(report.ok, false);
+  assert.ok(report.errors.some((error) => /managed profile runtime|legacy/i.test(error)));
 
   fs.rmSync(path.join(root, '.cursor', 'hooks.json'));
   report = checkProfile({ root });

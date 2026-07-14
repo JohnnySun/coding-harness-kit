@@ -18,8 +18,14 @@ bash tools/harness/agent-kit.sh profile show
 
 ```bash
 bash tools/harness/agent-kit.sh profile export --root <subject-root> --client cursor
-# 合併輸出的 wiring fragment 與規則契約後：
+# export 會接管該 client 的 prompt-submit advisory event：以 portable runtime
+# 取代既有 advisory router，但保留其他 hook events。合併規則契約後：
 bash tools/harness/agent-kit.sh profile check --root <subject-root> --client cursor
 ```
+
+Subject 不維護平行 prompt router 正文。`.harness/profile-runtime/` 與
+`.harness/profile-wiring/` 是 agent-kit export 產物；再次 export 會覆蓋 runtime，
+並停用原 prompt-submit event 上的舊 advisory 注入路徑。`profile check` 只接受
+該 managed runtime 作為 prompt-submit 入口。
 
 不要把 subject 業務 skill 拷進或 symlink 進本目錄（見根 `AGENTS.md` 黑名單）。

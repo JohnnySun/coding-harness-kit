@@ -10,6 +10,9 @@ docs/harness/gate-events.jsonl
 docs/harness/reports/
 .harness/agent-profile.local.yaml
 .harness/agent-profile-state.json
+.harness/agent-profile-rules.md
+.harness/profile-runtime/
+.harness/profile-wiring/
 
 # Scratch / one-off inspect trees
 _inspect/

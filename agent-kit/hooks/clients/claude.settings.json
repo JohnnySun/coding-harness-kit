@@ -19,7 +19,7 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/tools/harness/prompt-skill-router.mjs"],
+            "args": [".harness/profile-runtime/agent-profile-router.mjs"],
             "timeout": 5
           }
         ]

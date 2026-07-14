@@ -433,15 +433,23 @@ def check_hook_wiring() -> None:
     )
     if "cursor-hook.mjs" not in cursor:
         fail(cid, "cursor.hooks.json must call cursor-hook.mjs")
-    if "beforeSubmitPrompt" not in cursor or "prompt-skill-router.mjs" not in cursor:
-        fail(cid, "cursor.hooks.json must wire beforeSubmitPrompt → prompt-skill-router.mjs")
+    if (
+        "beforeSubmitPrompt" not in cursor
+        or ".harness/profile-runtime/agent-profile-router.mjs" not in cursor
+        or "prompt-skill-router.mjs" in cursor
+    ):
+        fail(cid, "cursor.hooks.json must exclusively wire beforeSubmitPrompt to profile runtime")
     claude = (ROOT / "agent-kit" / "hooks" / "clients" / "claude.settings.json").read_text(
         encoding="utf-8"
     )
     if "hook-router.mjs" not in claude:
         fail(cid, "claude.settings.json must call hook-router.mjs")
-    if "UserPromptSubmit" not in claude or "prompt-skill-router.mjs" not in claude:
-        fail(cid, "claude.settings.json must wire UserPromptSubmit → prompt-skill-router.mjs")
+    if (
+        "UserPromptSubmit" not in claude
+        or ".harness/profile-runtime/agent-profile-router.mjs" not in claude
+        or "prompt-skill-router.mjs" in claude
+    ):
+        fail(cid, "claude.settings.json must exclusively wire UserPromptSubmit to profile runtime")
     # Advisor card: dispatch-time tier consultation on subagent creation.
     # Claude PreToolUse matcher on Task/Agent must route to advisor-card.mjs.
     try:
@@ -474,8 +482,12 @@ def check_hook_wiring() -> None:
     )
     if "hook-router.mjs" not in codex_hooks:
         fail(cid, "codex.hooks.json must call hook-router.mjs")
-    if "UserPromptSubmit" not in codex_hooks or "prompt-skill-router.mjs" not in codex_hooks:
-        fail(cid, "codex.hooks.json must wire UserPromptSubmit → prompt-skill-router.mjs")
+    if (
+        "UserPromptSubmit" not in codex_hooks
+        or ".harness/profile-runtime/agent-profile-router.mjs" not in codex_hooks
+        or "prompt-skill-router.mjs" in codex_hooks
+    ):
+        fail(cid, "codex.hooks.json must exclusively wire UserPromptSubmit to profile runtime")
     # Codex has NO orchestrator-facing pre-spawn hook: SubagentStart delivers
     # additionalContext to the CHILD (post-decision), so it must NOT be wired to
     # the advisor card. The cross-client dispatch guidance is advisory prose in
@@ -523,11 +535,11 @@ def check_hook_wiring() -> None:
     # If a local install already materialized client trees, they must match SSOT wiring.
     installed = [
         (ROOT / ".cursor" / "hooks.json", "cursor-hook.mjs"),
-        (ROOT / ".cursor" / "hooks.json", "prompt-skill-router.mjs"),
+        (ROOT / ".cursor" / "hooks.json", ".harness/profile-runtime/agent-profile-router.mjs"),
         (ROOT / ".claude" / "settings.json", "hook-router.mjs"),
-        (ROOT / ".claude" / "settings.json", "prompt-skill-router.mjs"),
+        (ROOT / ".claude" / "settings.json", ".harness/profile-runtime/agent-profile-router.mjs"),
         (ROOT / ".codex" / "hooks.json", "hook-router.mjs"),
-        (ROOT / ".codex" / "hooks.json", "prompt-skill-router.mjs"),
+        (ROOT / ".codex" / "hooks.json", ".harness/profile-runtime/agent-profile-router.mjs"),
     ]
     for path, marker in installed:
         if path.is_file() and marker not in path.read_text(encoding="utf-8"):

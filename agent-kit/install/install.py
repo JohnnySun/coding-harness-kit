@@ -105,14 +105,7 @@ def prepare_agent_profile(
     if process_scaffold is not None:
         run_agent_profile("set", "process_scaffold", process_scaffold, *root_args)
     runtime_hash: str | None = None
-    if write_outputs and output_root.resolve() == ROOT.resolve():
-        runtime_hash = sha256_files(
-            [
-                AGENT_KIT / "profile" / "agent-profile.mjs",
-                AGENT_KIT / "profile" / "agent-profile-router.mjs",
-            ]
-        )
-    elif write_outputs:
+    if write_outputs:
         exported = run_agent_profile("export", *root_args, "--client", client)
         runtime_hash = str(exported["runtime_hash"])
     profile = run_agent_profile("show", *root_args, "--json")
@@ -1012,6 +1005,7 @@ def install(
     if write_outputs and not dry_run:
         state["runtime_hash"] = runtime_hash
         state.setdefault("clients", {})[client] = {
+            "materialization": "agent-kit-install",
             "managed_skills": list(skills),
             "managed_library_skills": sorted(desired_library_skills),
             "library_skills": library_skill_names,

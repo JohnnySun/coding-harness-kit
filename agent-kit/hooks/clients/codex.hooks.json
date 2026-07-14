@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node tools/harness/prompt-skill-router.mjs",
+            "command": "node .harness/profile-runtime/agent-profile-router.mjs",
             "timeout": 5
           }
         ]

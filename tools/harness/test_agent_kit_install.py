@@ -445,7 +445,11 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             self.assertIn("beforeShellExecution", hooks["hooks"])
             self.assertIn("beforeSubmitPrompt", hooks["hooks"])
             self.assertIn("cursor-hook.mjs", json.dumps(hooks))
-            self.assertIn("prompt-skill-router.mjs", json.dumps(hooks))
+            self.assertIn(
+                ".harness/profile-runtime/agent-profile-router.mjs",
+                json.dumps(hooks),
+            )
+            self.assertNotIn("prompt-skill-router.mjs", json.dumps(hooks))
 
     def test_install_writes_claude_prompt_skill_hook(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -462,7 +466,18 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
             settings = json.loads((out / ".claude" / "settings.json").read_text(encoding="utf-8"))
             self.assertIn("UserPromptSubmit", settings["hooks"])
-            self.assertIn("prompt-skill-router.mjs", json.dumps(settings))
+            self.assertIn(
+                ".harness/profile-runtime/agent-profile-router.mjs",
+                json.dumps(settings),
+            )
+            self.assertNotIn("prompt-skill-router.mjs", json.dumps(settings))
+
+    def test_profile_runtime_contains_no_coercive_skill_language(self) -> None:
+        router = (
+            AGENT_KIT / "profile" / "agent-profile-router.mjs"
+        ).read_text(encoding="utf-8")
+        self.assertNotRegex(router, r"(?i)\bmust follow\b")
+        self.assertNotRegex(router, r"(?i)\b1%\b")
 
     def test_install_writes_claude_advisor_card_hook(self) -> None:
         """Claude install wires PreToolUse(Task) → advisor-card.mjs (dispatch tier card)."""
@@ -532,7 +547,7 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
 
         SubagentStart delivers additionalContext to the CHILD subagent
         (post-decision) — useless for the orchestrator's dispatch decision. The
-        Codex advisor card now rides UserPromptSubmit → prompt-skill-router.mjs.
+        Codex advisor card now rides the managed UserPromptSubmit profile runtime.
         """
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
@@ -572,7 +587,11 @@ class TestAgentKitDryRunInstall(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stderr + proc.stdout)
             hooks = json.loads((out / ".codex" / "hooks.json").read_text(encoding="utf-8"))
             self.assertIn("UserPromptSubmit", hooks["hooks"])
-            self.assertIn("prompt-skill-router.mjs", json.dumps(hooks))
+            self.assertIn(
+                ".harness/profile-runtime/agent-profile-router.mjs",
+                json.dumps(hooks),
+            )
+            self.assertNotIn("prompt-skill-router.mjs", json.dumps(hooks))
 
     def test_install_writes_codex_schema_supported_top_level_fields(self) -> None:
         """Generated Codex hooks must not contain unknown top-level fields."""

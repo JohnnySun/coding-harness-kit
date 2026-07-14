@@ -208,16 +208,6 @@ function runtimeFiles(root) {
   ];
 }
 
-function activeRuntimeFiles(root) {
-  const portable = runtimeFiles(root);
-  if (portable.every((file) => fs.existsSync(file))) return portable;
-  const source = [
-    path.join(root, 'agent-kit', 'profile', 'agent-profile.mjs'),
-    path.join(root, 'agent-kit', 'profile', 'agent-profile-router.mjs'),
-  ];
-  return source.every((file) => fs.existsSync(file)) ? source : portable;
-}
-
 function wiringFragment(client) {
   const command = 'node .harness/profile-runtime/agent-profile-router.mjs';
   if (client === 'cursor' || client === 'cursor-cli') {
@@ -245,6 +235,70 @@ function wiringFragment(client) {
     return { note: 'This client has no supported prompt-submit hook; description discovery remains active.' };
   }
   throw new Error(`unsupported client: ${client}`);
+}
+
+function promptHookEvent(client) {
+  if (client === 'cursor' || client === 'cursor-cli') return 'beforeSubmitPrompt';
+  if (client === 'claude' || client === 'codex') return 'UserPromptSubmit';
+  return null;
+}
+
+function reconcilePromptWiring(root, client) {
+  const hookFile = clientHookFile(root, client);
+  const event = promptHookEvent(client);
+  if (!hookFile || !event) return 0;
+  let config = {};
+  if (fs.existsSync(hookFile)) {
+    try {
+      config = JSON.parse(fs.readFileSync(hookFile, 'utf8'));
+    } catch (error) {
+      throw new Error(`${client} hook configuration is invalid JSON: ${error.message}`);
+    }
+  }
+  if (!config || Array.isArray(config) || typeof config !== 'object') {
+    throw new Error(`${client} hook configuration must be a JSON object`);
+  }
+  if (!config.hooks || Array.isArray(config.hooks) || typeof config.hooks !== 'object') {
+    config.hooks = {};
+  }
+  const previous = Array.isArray(config.hooks[event]) ? config.hooks[event].length : 0;
+  config.hooks[event] = wiringFragment(client).hooks[event];
+  if ((client === 'cursor' || client === 'cursor-cli') && !Object.hasOwn(config, 'version')) {
+    config.version = 1;
+  }
+  atomicWrite(hookFile, `${JSON.stringify(config, null, 2)}\n`);
+  return previous;
+}
+
+function recordProfileExport(root, client, runtimeHash) {
+  const stateFile = path.join(root, '.harness', 'agent-profile-state.json');
+  let state = { schema_version: 1, clients: {} };
+  if (fs.existsSync(stateFile)) {
+    try {
+      state = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+    } catch (error) {
+      throw new Error(`managed profile state is invalid JSON: ${error.message}`);
+    }
+  }
+  if (state.schema_version !== 1 || !state.clients || typeof state.clients !== 'object') {
+    throw new Error('managed profile state has an unsupported schema');
+  }
+  const effective = loadProfile({ root }).effective;
+  const previous = state.clients[client];
+  const installed = previous?.materialization === 'agent-kit-install'
+    || (previous && typeof previous.library_skills === 'object');
+  state.runtime_hash = runtimeHash;
+  state.clients[client] = installed
+    ? { ...previous, materialization: 'agent-kit-install' }
+    : {
+        ...(previous || {}),
+        materialization: 'profile-export',
+        libraries: {
+          superpowers: effective.sp_library,
+          matt: effective.matt_skills,
+        },
+      };
+  atomicWrite(stateFile, `${JSON.stringify(state, null, 2)}\n`);
 }
 
 function appendIgnoreRules(root) {
@@ -287,8 +341,9 @@ export function exportProfile({ root, client }) {
   atomicWrite(
     path.join(wiringDir, `${client}.json`),
     JSON.stringify({
-      merge_manually: true,
-      overwrites_existing_hooks: false,
+      merge_manually: false,
+      owns_prompt_submit_event: client !== 'codex-native',
+      preserves_other_hook_events: true,
       fragment: wiringFragment(client),
     }, null, 2) + '\n',
   );
@@ -298,6 +353,7 @@ export function exportProfile({ root, client }) {
     '- Profile routing is lightweight and advisory, not a global process gate.',
     '- Agents change profile settings through `agent-kit.sh profile set`, not direct edits.',
     '- Enforcement hooks protect machine-checkable invariants and do not recommend skills.',
+    '- Agent Kit owns the active prompt-submit advisory path; export replaces that event while preserving other hook events.',
     '',
   ].join('\n');
   atomicWrite(path.join(harnessDir, 'agent-profile-rules.md'), contractText);
@@ -306,14 +362,16 @@ export function exportProfile({ root, client }) {
   if (!hasRules) atomicWrite(path.join(repoRoot, 'AGENTS.md'), contractText);
   appendIgnoreRules(repoRoot);
   const runtimeHash = sha256Files(runtimeFiles(repoRoot));
+  const promptHooksReplaced = reconcilePromptWiring(repoRoot, client);
+  recordProfileExport(repoRoot, client, runtimeHash);
   return {
     root: repoRoot,
     client,
     runtime_hash: runtimeHash,
-    hooks_overwritten: false,
+    prompt_hooks_replaced: promptHooksReplaced,
+    other_hook_events_preserved: true,
     rules_overwritten: false,
     required_actions: [
-      `merge .harness/profile-wiring/${client}.json into the active client hook configuration`,
       'copy the profile contract into an always-loaded agent rules file',
       `run profile check --root <repo> --client ${client}`,
     ],
@@ -335,6 +393,45 @@ function clientSkillDirectory(root, client) {
   return null;
 }
 
+function configuredPromptCommands(root, client, errors) {
+  const hookFile = clientHookFile(root, client);
+  if (!hookFile || !fs.existsSync(hookFile)) return [];
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(hookFile, 'utf8'));
+  } catch (error) {
+    errors.push(`${client} hook configuration is invalid JSON: ${error.message}`);
+    return [];
+  }
+  const event = promptHookEvent(client);
+  const entries = config?.hooks?.[event];
+  if (!Array.isArray(entries)) return [];
+  if (client === 'cursor' || client === 'cursor-cli') {
+    return entries
+      .map((entry) => entry?.command)
+      .filter((command) => typeof command === 'string');
+  }
+  return entries.flatMap((entry) => (
+    Array.isArray(entry?.hooks)
+      ? entry.hooks.map((hook) => {
+          if (typeof hook?.command !== 'string') return null;
+          const args = Array.isArray(hook.args) ? hook.args.join(' ') : '';
+          return `${hook.command}${args ? ` ${args}` : ''}`;
+        }).filter(Boolean)
+      : []
+  ));
+}
+
+function checkPromptWiring(root, client, errors) {
+  const expected = 'node .harness/profile-runtime/agent-profile-router.mjs';
+  const commands = configuredPromptCommands(root, client, errors);
+  if (commands.length !== 1 || commands[0] !== expected) {
+    errors.push(
+      `${client} prompt wiring must exclusively use the managed profile runtime; run profile export`,
+    );
+  }
+}
+
 export function checkProfile({ root, client } = {}) {
   const repoRoot = normalizedRoot(root);
   const errors = [];
@@ -344,22 +441,18 @@ export function checkProfile({ root, client } = {}) {
   } catch (error) {
     errors.push(`profile config: ${error.message}`);
   }
-  const files = activeRuntimeFiles(repoRoot);
+  const files = runtimeFiles(repoRoot);
   const runtimePresent = files.every((file) => fs.existsSync(file));
   const runtimeHash = runtimePresent ? sha256Files(files) : null;
   if (!runtimePresent) errors.push('portable profile runtime is missing; run profile export');
 
   if (client && client !== 'codex-native') {
-    const hookFile = clientHookFile(repoRoot, client);
-    const hookText = hookFile && fs.existsSync(hookFile) ? fs.readFileSync(hookFile, 'utf8') : '';
-    if (!/agent-profile-router\.mjs|prompt-skill-router\.mjs/.test(hookText)) {
-      errors.push(`${client} prompt wiring is missing the profile router`);
-    }
+    checkPromptWiring(repoRoot, client, errors);
   } else if (!client) {
     const wired = ['cursor', 'claude', 'codex'].some((candidate) => {
-      const hookFile = clientHookFile(repoRoot, candidate);
-      const hookText = hookFile && fs.existsSync(hookFile) ? fs.readFileSync(hookFile, 'utf8') : '';
-      return /agent-profile-router\.mjs|prompt-skill-router\.mjs/.test(hookText);
+      const probeErrors = [];
+      checkPromptWiring(repoRoot, candidate, probeErrors);
+      return probeErrors.length === 0;
     });
     if (!wired) errors.push('at least one active client prompt wiring must include the profile router');
   }
@@ -400,6 +493,16 @@ export function checkProfile({ root, client } = {}) {
     }
     if (libraries.matt !== profile.effective.matt_skills) {
       errors.push('Matt library materialization does not match effective profile');
+    }
+    if (clientState.materialization === 'profile-export') {
+      return {
+        ok: errors.length === 0,
+        root: repoRoot,
+        client: client || null,
+        effective: profile?.effective || null,
+        runtime_hash: runtimeHash,
+        errors,
+      };
     }
     const librarySkills = clientState.library_skills || {};
     const spSkills = librarySkills.superpowers || [];
