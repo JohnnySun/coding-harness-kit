@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# coding-harness-kit one-line installer (public GitHub / HTTPS).
+# Los Santos Customs (LSC) one-line installer (public GitHub / HTTPS).
+# Repo slug remains coding-harness-kit until remote rename.
 #
 # Usage:
 #   bash <(curl -fsSL https://raw.githubusercontent.com/JohnnySun/coding-harness-kit/main/scripts/install.sh)
@@ -58,7 +59,7 @@ else
     err "路徑 $TARGET_DIR 已存在但不是 git 倉庫，請換目錄或刪除後重試。"
     exit 1
   fi
-  info "克隆 coding-harness-kit → $TARGET_DIR （含 submodule）…"
+  info "克隆 Los Santos Customs → $TARGET_DIR （含 submodule）…"
   git clone --recurse-submodules --branch "$REPO_REF" "$REPO_URL" "$TARGET_DIR"
   ok "克隆完成。"
 fi

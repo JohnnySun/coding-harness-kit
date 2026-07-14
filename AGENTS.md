@@ -1,6 +1,6 @@
-# coding-harness-kit
+# Los Santos Customs
 
-本倉是 **coding-harness 工具倉**（顯示名 coding-harness-kit）：用來構建 / 迭代各業務倉（subject）的 coding harness——導入 / 同步 / 比較 / 評價。  
+本倉是 **coding-harness 工具倉**（顯示名 Los Santos Customs / 洛聖都改車王）：用來構建 / 迭代各業務倉（subject）的 coding harness——導入 / 同步 / 比較 / 評價。  
 業務源碼不是一等公民；工作對象是 harness 表面。方法論見 `agent-kit/`；自身設計見 `docs/harness/design.md`。
 
 ## 公開 / 本機邊界（脫敏）

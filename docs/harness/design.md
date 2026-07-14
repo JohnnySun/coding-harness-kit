@@ -1,8 +1,8 @@
-# coding-harness-kit 自身 Harness 設計
+# Los Santos Customs 自身 Harness 設計
 
 > 方法：`harness-builder` 工作流 A（評估）→ 工作流 B（從零構建）。  
 > 日期：2026-07-09（rev.5 — 公開可信集脫敏：步1 僅公開 check IDs；本機 absorb → subject_ready）  
-> 顯示名：**coding-harness-kit**（構建 / 迭代 coding harness 的工具倉）。  
+> 顯示名：**Los Santos Customs**（LSC / 洛聖都改車王；構建 / 迭代 coding harness 的工具倉）。  
 > 對象：本工具倉（優化 / 迭代 / 比較各 subject harness），**不是** subject 業務倉。  
 > 審查：`docs/harness/plan-review-2026-07-09.md`；決策採納：F5 **無逃生**；hook-router **vendor copy**。
 
